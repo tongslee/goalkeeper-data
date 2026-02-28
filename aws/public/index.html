@@ -9,25 +9,37 @@
     html,body{background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;margin:0;min-height:100vh}
     .container{max-width:720px;margin:0 auto;padding:16px}
     h1{font-size:24px;text-align:center;margin:0 0 8px}
+    h2{font-size:20px}
     .card{background:var(--panel);border-radius:var(--radius);padding:20px}
     .stack{display:grid;gap:12px}
     label{font-size:14px;color:var(--muted);display:block;margin-bottom:4px}
     input{font-size:16px;border-radius:12px;border:1px solid #1f2733;background:#0f1520;color:var(--text);padding:14px;width:100%;box-sizing:border-box}
     button{font-size:16px;border-radius:12px;border:1px solid #1f2733;background:#0f1520;color:var(--text);padding:14px;width:100%;cursor:pointer;font-weight:600}
     button.primary{background:var(--accent);color:#001e3c;border:none}
+    button.small{padding:10px;font-size:14px;width:auto}
     .tabs{display:flex;gap:4px;margin-bottom:16px;background:#0f1520;padding:4px;border-radius:12px}
     .tab{flex:1;padding:14px;text-align:center;border-radius:8px;cursor:pointer;font-size:16px;font-weight:600;color:var(--muted);-webkit-tap-highlight-color:transparent}
     .tab.active{background:var(--accent);color:#001e3c}
     .hidden{display:none}
     .mt-2{margin-top:8px}
+    .mb-2{margin-bottom:8px}
     .mb-4{margin-bottom:16px}
     .muted{color:var(--muted)}
     .text-center{text-align:center}
     .error{color:var(--danger);text-align:center;font-size:14px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    .stat{background:#0f1520;padding:12px;border-radius:12px;border:1px solid #1f2733;text-align:center}
+    .stat .v{font-size:20px;font-weight:800}
+    .stat .k{font-size:10px;color:var(--muted)}
+    .bar{background:#0f1520;border-radius:999px;border:1px solid #1f2733;height:10px;margin:8px 0;overflow:hidden}
+    .bar>div{height:100%;background:var(--accent);width:0%}
+    .bar>div.high{background:var(--success)}
   </style>
 </head>
 <body>
   <div class="container">
+    <!-- Auth Screen -->
     <div id="screen-auth">
       <div class="card">
         <h1>🥅 Goalkeeper Stats</h1>
@@ -66,37 +78,111 @@
       </div>
     </div>
 
+    <!-- Main Screen -->
     <div id="screen-main" class="hidden">
-      <h1>🥅 GK Stats</h1>
-      <button onclick="logout()" class="mb-4">Logout</button>
-      <button class="primary mb-4" onclick="openModal('player-modal')">+ Add Goalkeeper</button>
-      <div id="players-list"></div>
+      <div class="tabs">
+        <div class="tab active" id="tab-players" onclick="switchView('players')">My Players</div>
+        <div class="tab" id="tab-browse" onclick="switchView('browse')">Browse</div>
+        <div class="tab" id="tab-leaderboard" onclick="switchView('leaderboard')">Leaderboard</div>
+      </div>
+      
+      <div id="view-players">
+        <button class="primary mb-4" onclick="openModal('player-modal')">+ Add Goalkeeper</button>
+        <div id="players-list"></div>
+      </div>
+      
+      <div id="view-browse" class="hidden">
+        <input type="text" id="search" placeholder="Search..." class="mb-2" oninput="loadBrowse()" />
+        <div id="browse-list"></div>
+      </div>
+      
+      <div id="view-leaderboard" class="hidden">
+        <div id="leaderboard-list"></div>
+      </div>
+    </div>
+
+    <!-- Detail Screen -->
+    <div id="screen-detail" class="hidden">
+      <button class="small mb-4" onclick="showScreen('main')">← Back</button>
+      <button class="small danger" onclick="deletePlayer()" style="float:right;background:var(--danger);color:#fff;border:none">Delete</button>
+      
+      <h2 id="detail-name"></h2>
+      <p class="muted" id="detail-meta"></p>
+      
+      <div class="card mb-4">
+        <div class="row">
+          <div class="stat"><div class="v" id="stat-matches">0</div><div class="k">Matches</div></div>
+          <div class="stat"><div class="v" id="stat-saves">0</div><div class="k">Saves</div></div>
+          <div class="stat"><div class="v" id="stat-conceded">0</div><div class="k">Conceded</div></div>
+          <div class="stat"><div class="v" id="stat-cleansheets">0</div><div class="k">Clean</div></div>
+        </div>
+        <div class="stat-row mt-2">
+          <div class="stat"><div class="v" id="stat-savepct">0%</div><div class="k">Save %</div></div>
+          <div class="stat"><div class="v" id="stat-penalties">0</div><div class="k">Pen.Saved</div></div>
+          <div class="stat"><div class="v" id="stat-rating">-</div><div class="k">Avg Rating</div></div>
+          <div class="stat"><div class="v" id="stat-minutes">0</div><div class="k">Minutes</div></div>
+        </div>
+      </div>
+      
+      <button class="primary mb-4" onclick="openModal('match-modal')">+ Add Match</button>
+      
+      <h3>Match History</h3>
+      <div id="matches-list"></div>
     </div>
   </div>
 
+  <!-- Add Player Modal -->
   <div id="player-modal" class="modal hidden">
     <div class="card">
       <h2>Add Goalkeeper</h2>
       <form onsubmit="handlePlayerSubmit(event)">
         <div><label>Name</label><input type="text" id="player-name" required /></div>
         <div class="mt-2"><label>Team</label><input type="text" id="player-team" /></div>
+        <div class="row mt-2"><div><label>Competition</label><input type="text" id="player-competition" /></div><div><label>Season</label><input type="text" id="player-season" value="2025/26" /></div></div>
         <button type="submit" class="primary mt-4">Add</button>
         <button type="button" onclick="closeModal('player-modal')" class="mt-2">Cancel</button>
       </form>
     </div>
   </div>
 
+  <!-- Add Match Modal -->
+  <div id="match-modal" class="modal hidden">
+    <div class="card">
+      <h2>Add Match</h2>
+      <form onsubmit="handleMatchSubmit(event)">
+        <div class="row"><div><label>Date</label><input type="date" id="match-date" required /></div><div><label>Minutes</label><input type="number" id="match-minutes" value="90" /></div></div>
+        <div class="row mt-2"><div><label>Your Team</label><input type="text" id="match-team" required /></div><div><label>Opponent</label><input type="text" id="match-opponent" required /></div></div>
+        <div class="row mt-2"><div><label>Saves</label><input type="number" id="match-saves" value="0" min="0" /></div><div><label>Goals</label><input type="number" id="match-conceded" value="0" min="0" /></div></div>
+        <div class="mt-2"><label>Rating (1-10)</label><input type="number" id="match-rating" min="1" max="10" /></div>
+        <div class="mt-2">
+          <label><input type="checkbox" id="match-cleansheet" /> Clean Sheet</label>
+          <label><input type="checkbox" id="match-penalty" /> Penalty Saved</label>
+        </div>
+        <button type="submit" class="primary mt-4">Save</button>
+        <button type="button" onclick="closeModal('match-modal')" class="mt-2">Cancel</button>
+      </form>
+    </div>
+  </div>
+
   <style>
     .modal{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;padding:16px}
-    .player-card{background:#0f1520;border:1px solid #1f2733;border-radius:12px;padding:14px;margin-bottom:8px}
+    .player-card{background:#0f1520;border:1px solid #1f2733;border-radius:12px;padding:14px;margin-bottom:8px;cursor:pointer}
     .player-card .name{font-weight:600;font-size:18px}
-    .player-card .info{font-size:14px;color:var(--muted)}
+    .player-card .info{font-size:14px;color:var(--muted);margin-top:4px}
+    .match-card{background:#0f1520;border:1px solid #1f2733;border-radius:12px;padding:14px;margin-bottom:8px}
+    .match-card .teams{font-weight:600}
+    .match-card .date{font-size:13px;color:var(--muted)}
+    .empty{text-align:center;padding:30px;color:var(--muted)}
+    .danger{background:var(--danger);color:#fff;border:none}
   </style>
 
   <script>
     let token = localStorage.getItem('gk_token');
     let currentTab = 'login';
+    let currentView = 'players';
+    let currentPlayerId = null;
 
+    // Tab switching
     function showTab(tab) {
       currentTab = tab;
       document.getElementById('tab-login').classList.toggle('active', tab === 'login');
@@ -107,6 +193,20 @@
       document.getElementById('username').required = (tab === 'register');
     }
 
+    function switchView(view) {
+      currentView = view;
+      document.getElementById('tab-players').classList.toggle('active', view === 'players');
+      document.getElementById('tab-browse').classList.toggle('active', view === 'browse');
+      document.getElementById('tab-leaderboard').classList.toggle('active', view === 'leaderboard');
+      document.getElementById('view-players').classList.toggle('hidden', view !== 'players');
+      document.getElementById('view-browse').classList.toggle('hidden', view !== 'browse');
+      document.getElementById('view-leaderboard').classList.toggle('hidden', view !== 'leaderboard');
+      if (view === 'players') loadMyPlayers();
+      if (view === 'browse') loadBrowse();
+      if (view === 'leaderboard') loadLeaderboard();
+    }
+
+    // Auth
     async function handleAuth(e) {
       e.preventDefault();
       const username = document.getElementById('username').value;
@@ -115,77 +215,162 @@
       const displayName = document.getElementById('display-name').value;
       
       const endpoint = currentTab === 'register' ? '/api/auth/register' : '/api/auth/login';
-      const body = currentTab === 'register' 
-        ? {username, email, password, display_name: displayName}
-        : {email, password};
+      const body = currentTab === 'register' ? {username, email, password, display_name: displayName} : {email, password};
       
       try {
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify(body)
-        });
+        const res = await fetch(endpoint, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed');
         token = data.token;
         localStorage.setItem('gk_token', token);
-        loadUser();
-      } catch(err) {
-        document.getElementById('auth-error').textContent = err.message;
-      }
+        showScreen('main');
+        loadMyPlayers();
+      } catch(err) { document.getElementById('auth-error').textContent = err.message; }
     }
 
-    async function loadUser() {
-      document.getElementById('screen-auth').classList.add('hidden');
-      document.getElementById('screen-main').classList.remove('hidden');
-      loadMyPlayers();
-    }
-
+    // Players
     async function loadMyPlayers() {
       const c = document.getElementById('players-list');
+      if (!token) return c.innerHTML = '<div class="empty">Please login</div>';
       try {
-        const res = await fetch('/api/players/my', {
-          headers: {'Authorization': 'Bearer ' + token}
-        });
+        const res = await fetch('/api/players/my', {headers: {'Authorization': 'Bearer ' + token}});
         const data = await res.json();
-        if (!data.players?.length) {
-          c.innerHTML = '<p class="muted text-center">No players yet</p>';
-          return;
-        }
+        if (!data.players?.length) return c.innerHTML = '<div class="empty">No players yet. Add one!</div>';
         c.innerHTML = data.players.map(p => 
-          '<div class="player-card"><div class="name">'+p.player_name+'</div><div class="info">'+(p.team_name||'')+' - '+(p.matches_played||0)+' matches</div></div>'
+          '<div class="player-card" onclick="loadPlayerDetail('+p.id+')"><div class="name">'+p.player_name+'</div><div class="info">'+(p.team_name||'')+' - '+(p.matches_played||0)+' matches, '+(p.saves||0)+' saves</div></div>'
         ).join('');
-      } catch {
-        c.innerHTML = '<p class="error">Error loading</p>';
-      }
+      } catch { c.innerHTML = '<div class="empty">Error loading</div>'; }
     }
 
+    async function loadBrowse() {
+      const c = document.getElementById('browse-list');
+      const search = document.getElementById('search').value;
+      let url = '/api/players?';
+      if (search) url += 'search=' + encodeURIComponent(search);
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!data.players?.length) return c.innerHTML = '<div class="empty">No players found</div>';
+        c.innerHTML = data.players.map(p => 
+          '<div class="player-card" onclick="loadPlayerDetail('+p.id+')"><div class="name">'+p.player_name+'</div><div class="info">'+(p.team_name||'')+' - '+(p.matches_played||0)+' matches</div></div>'
+        ).join('');
+      } catch { c.innerHTML = '<div class="empty">Error</div>'; }
+    }
+
+    async function loadLeaderboard() {
+      const c = document.getElementById('leaderboard-list');
+      try {
+        const res = await fetch('/api/players?sort=saves');
+        const data = await res.json();
+        if (!data.players?.length) return c.innerHTML = '<div class="empty">No players</div>';
+        c.innerHTML = data.players.map((p,i) => 
+          '<div class="player-card" onclick="loadPlayerDetail('+p.id+')"><div class="name">#'+(i+1)+' '+p.player_name+'</div><div class="info">'+(p.team_name||'')+' - '+(p.saves||0)+' saves</div></div>'
+        ).join('');
+      } catch { c.innerHTML = '<div class="empty">Error</div>'; }
+    }
+
+    // Detail
+    async function loadPlayerDetail(id) {
+      currentPlayerId = id;
+      try {
+        const res = await fetch('/api/players/'+id, {headers: token ? {'Authorization': 'Bearer '+token} : {}});
+        const d = await res.json();
+        const p = d.player;
+        
+        document.getElementById('detail-name').textContent = p.player_name;
+        document.getElementById('detail-meta').textContent = [p.team_name, p.competition, p.season].filter(Boolean).join(' • ');
+        
+        const m = p.matches_played||0, s = p.saves||0, c = p.goals_conceded||0, cs = p.clean_sheets||0;
+        document.getElementById('stat-matches').textContent = m;
+        document.getElementById('stat-saves').textContent = s;
+        document.getElementById('stat-conceded').textContent = c;
+        document.getElementById('stat-cleansheets').textContent = cs;
+        document.getElementById('stat-penalties').textContent = p.penalties_saved||0;
+        document.getElementById('stat-minutes').textContent = p.minutes_played||0;
+        
+        const sp = (s+c) > 0 ? Math.round(s/(s+c)*100) : 0;
+        document.getElementById('stat-savepct').textContent = sp + '%';
+        
+        // Rating
+        if (d.matches?.length) {
+          const rs = d.matches.filter(x => x.rating).map(x => parseFloat(x.rating));
+          document.getElementById('stat-rating').textContent = rs.length ? (rs.reduce((a,b) => a+b, 0) / rs.length).toFixed(1) : '-';
+        }
+        
+        // Matches
+        const mc = document.getElementById('matches-list');
+        if (!d.matches?.length) mc.innerHTML = '<div class="empty">No matches</div>';
+        else mc.innerHTML = d.matches.map(m => 
+          '<div class="match-card"><div class="teams">'+m.match_team+' vs '+m.opponent_team+'</div><div class="date">'+new Date(m.match_date).toLocaleDateString()+' - '+(m.minutes_played||0)+'min</div><div class="info">🧤'+m.saves+' saves, ⚽'+m.goals_conceded+' conceded'+(m.clean_sheet?', ✅ Clean':'')+(m.penalty_save?', ⭐ Penalties':'')+'</div></div>'
+        ).join('');
+        
+        showScreen('detail');
+      } catch { alert('Error loading'); }
+    }
+
+    async function deletePlayer() {
+      if (!confirm('Delete this player and all matches?')) return;
+      try {
+        await fetch('/api/players/'+currentPlayerId, {method: 'DELETE', headers: {'Authorization': 'Bearer '+token}});
+        showScreen('main');
+        loadMyPlayers();
+      } catch { alert('Error deleting'); }
+    }
+
+    // Forms
     async function handlePlayerSubmit(e) {
       e.preventDefault();
       const body = {
         player_name: document.getElementById('player-name').value,
-        team_name: document.getElementById('player-team').value
+        team_name: document.getElementById('player-team').value,
+        competition: document.getElementById('player-competition').value,
+        season: document.getElementById('player-season').value
       };
       try {
-        const res = await fetch('/api/players', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
-          body: JSON.stringify(body)
-        });
+        const res = await fetch('/api/players', {method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer '+token}, body: JSON.stringify(body)});
         if (!res.ok) throw new Error('Failed');
         closeModal('player-modal');
         e.target.reset();
         loadMyPlayers();
-      } catch {
-        alert('Error adding player');
-      }
+      } catch { alert('Error adding player'); }
+    }
+
+    async function handleMatchSubmit(e) {
+      e.preventDefault();
+      if (!currentPlayerId) return;
+      const body = {
+        match_date: document.getElementById('match-date').value,
+        match_team: document.getElementById('match-team').value,
+        opponent_team: document.getElementById('match-opponent').value,
+        minutes_played: parseInt(document.getElementById('match-minutes').value)||0,
+        saves: parseInt(document.getElementById('match-saves').value)||0,
+        goals_conceded: parseInt(document.getElementById('match-conceded').value)||0,
+        clean_sheet: document.getElementById('match-cleansheet').checked,
+        penalty_save: document.getElementById('match-penalty').checked,
+        rating: document.getElementById('match-rating').value || null
+      };
+      try {
+        const res = await fetch('/api/players/'+currentPlayerId+'/matches', {method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer '+token}, body: JSON.stringify(body)});
+        if (!res.ok) throw new Error('Failed');
+        closeModal('match-modal');
+        e.target.reset();
+        loadPlayerDetail(currentPlayerId);
+      } catch { alert('Error adding match'); }
+    }
+
+    // Utils
+    function showScreen(s) {
+      document.getElementById('screen-auth').classList.toggle('hidden', s !== 'auth');
+      document.getElementById('screen-main').classList.toggle('hidden', s !== 'main');
+      document.getElementById('screen-detail').classList.toggle('hidden', s !== 'detail');
     }
 
     function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-    function logout() { localStorage.removeItem('gk_token'); token = null; location.reload(); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); if(id==='match-modal')document.getElementById('match-date').value=new Date().toISOString().split('T')[0]; }
+    function logout() { localStorage.removeItem('gk_token'); token = null; showScreen('auth'); }
     
-    if (token) loadUser();
+    // Init
+    if (token) { showScreen('main'); loadMyPlayers(); } else showScreen('auth');
   </script>
 </body>
 </html>
