@@ -374,10 +374,11 @@
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); if(id==='match-modal')document.getElementById('match-date').value=new Date().toISOString().split('T')[0]; }
     function logout() { localStorage.removeItem('gk_token'); token = null; showScreen('auth'); }
     
-    // Init - always show auth first, verify token with server
-    showScreen('auth');
-    closeModal('player-modal');
-    closeModal('match-modal');
+    // Init - ALWAYS show auth first, verify token with server
+    // Force show auth screen immediately
+    document.getElementById('screen-auth').style.display = 'block';
+    document.getElementById('screen-main').style.display = 'none';
+    document.getElementById('screen-detail').style.display = 'none';
     
     async function init() {
       const savedToken = localStorage.getItem('gk_token');
