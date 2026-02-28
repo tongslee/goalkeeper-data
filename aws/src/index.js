@@ -21,10 +21,8 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Routes
-app.use('/api/auth', require('./src/routes/auth'));
-app.use('/api/players', require('./src/routes/players'));
-app.use('/api/users', require('./routes/users'));
-app.use('/api/admin', require('./routes/admin'));
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/players', require('./routes/players'));
 
 // Frontend routes
 app.get('*', (req, res) => {

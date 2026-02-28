@@ -1,34 +1,887 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Goalkeeper Stats 🧤</title>
-    <link rel="stylesheet" href="/css/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Goalkeeper Stats</title>
+  <style>
+    :root {
+      --bg: #0c0f14;
+      --panel: #121720;
+      --muted: #8492a6;
+      --text: #e8eefc;
+      --accent: #3aa0ff;
+      --edge: #ffa23a;
+      --edgeText: #2a1400;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --shadow: 0 8px 30px rgba(0, 0, 0, .4);
+      --radius: 16px;
+      --pad: 14px;
+    }
+
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
+      margin: 0;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    h1, h2, h3 { margin: 0 0 10px; }
+    h1 { font-size: 24px; }
+
+    .card {
+      background: var(--panel);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: var(--pad);
+    }
+
+    .stack { display: grid; gap: 12px; }
+
+    label {
+      font-size: 14px;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    input, select, button {
+      font-size: 16px;
+      border-radius: 12px;
+      border: 1px solid #1f2733;
+      background: #0f1520;
+      color: var(--text);
+      padding: 12px 14px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: #001e3c;
+      border: none;
+    }
+
+    button.danger {
+      background: var(--danger);
+      color: white;
+      border: none;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .pillbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pill {
+      padding: 10px 12px;
+      background: #0f1520;
+      border: 1px solid #1f2733;
+      border-radius: 999px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .pill.active {
+      outline: 2px solid var(--accent);
+      background: #0b1220;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .header .logo {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .header .user {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    /* Stats grid */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .stat {
+      background: #0f1520;
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid #1f2733;
+      text-align: center;
+    }
+
+    .stat .v {
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .stat .k {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Player list */
+    .player-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .player-card {
+      background: #0f1520;
+      border: 1px solid #1f2733;
+      border-radius: 12px;
+      padding: 12px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .player-card:hover {
+      border-color: var(--accent);
+    }
+
+    .player-card .name {
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    .player-card .team {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .player-card .stats-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+      font-size: 13px;
+    }
+
+    .player-card .stats-row span {
+      color: var(--muted);
+    }
+
+    /* Modal */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .modal.open { display: flex; }
+
+    .modal-content {
+      background: var(--panel);
+      width: 90%;
+      max-width: 400px;
+      border-radius: 18px;
+      padding: 20px;
+      max-height: 85vh;
+      overflow: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .modal-header h2 { margin: 0; }
+
+    .close {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 24px;
+      padding: 0;
+      width: auto;
+    }
+
+    /* Match form */
+    .match-form {
+      display: grid;
+      gap: 12px;
+    }
+
+    .bigbtn {
+      padding: 20px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+    }
+
+    .bigbtn.saved {
+      background: #0a2c1b;
+      color: #b7ffd3;
+    }
+
+    .bigbtn.conceded {
+      background: #2b0a0a;
+      color: #ffc2c2;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      background: #0f1520;
+      padding: 4px;
+      border-radius: 12px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: #001e3c;
+    }
+
+    .hidden { display: none !important; }
+
+    .muted { color: var(--muted); }
+    .text-center { text-align: center; }
+    .mt-4 { margin-top: 16px; }
+    .mb-2 { margin-bottom: 8px; }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--muted);
+    }
+
+    /* Empty state */
+    .empty {
+      text-align: center;
+      padding: 40px;
+      color: var(--muted);
+    }
+  </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="container">
-            <a href="/" class="logo">🥅 Goalkeeper Stats</a>
-            <div class="nav-links" id="navLinks">
-                <a href="/">Home</a>
-                <a href="/players">Players</a>
-                <a href="/login" id="loginLink">Login</a>
-                <a href="/register" id="registerLink" style="display:none">Register</a>
+  <div class="container">
+    <!-- Auth Screen -->
+    <div id="screen-auth" class="card">
+      <h1 class="text-center mb-2">🥅 Goalkeeper Stats</h1>
+      <p class="muted text-center mb-2">Track your goalkeeper performance</p>
+      
+      <div class="tabs">
+        <div class="tab active" data-tab="login">Login</div>
+        <div class="tab" data-tab="register">Register</div>
+      </div>
+
+      <form id="auth-form" class="stack">
+        <div>
+          <label>Username</label>
+          <input type="text" id="username" required />
+        </div>
+        <div>
+          <label>Email</label>
+          <input type="email" id="email" required />
+        </div>
+        <div>
+          <label>Password</label>
+          <input type="password" id="password" required minlength="8" />
+        </div>
+        <div id="name-field" class="hidden">
+          <label>Display Name</label>
+          <input type="text" id="display-name" />
+        </div>
+        <button type="submit" class="primary" id="auth-btn">Login</button>
+      </form>
+    </div>
+
+    <!-- Main Screen -->
+    <div id="screen-main" class="hidden">
+      <div class="header">
+        <div class="logo">🥅 GK Stats</div>
+        <div class="toolbar">
+          <span class="user" id="user-name"></span>
+          <button class="btn" onclick="logout()">Logout</button>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" data-view="players">My Players</div>
+        <div class="tab" data-view="public">Browse</div>
+      </div>
+
+      <!-- My Players -->
+      <div id="view-my-players">
+        <button class="primary mb-2" onclick="openModal('player-modal')">+ Add Player</button>
+        <div id="my-players-list" class="player-list"></div>
+      </div>
+
+      <!-- Public Players -->
+      <div id="view-public" class="hidden">
+        <div class="pillbar mb-2">
+          <input type="text" id="search" placeholder="Search players..." />
+        </div>
+        <select id="filter-competition" class="mb-2">
+          <option value="">All Competitions</option>
+        </select>
+        <div id="public-players-list" class="player-list"></div>
+      </div>
+    </div>
+
+    <!-- Player Detail -->
+    <div id="screen-detail" class="hidden">
+      <div class="header">
+        <button class="btn" onclick="showScreen('main')">← Back</button>
+        <button class="danger" onclick="deletePlayer()">Delete</button>
+      </div>
+
+      <div class="card mb-2">
+        <h2 id="detail-name">Player Name</h2>
+        <p class="muted" id="detail-team">Team • Competition</p>
+        
+        <div class="stats">
+          <div class="stat">
+            <div class="v" id="stat-matches">0</div>
+            <div class="k">Matches</div>
+          </div>
+          <div class="stat">
+            <div class="v" id="stat-saves">0</div>
+            <div class="k">Saves</div>
+          </div>
+          <div class="stat">
+            <div class="v" id="stat-conceded">0</div>
+            <div class="k">Conceded</div>
+          </div>
+          <div class="stat">
+            <div class="v" id="stat-cleansheets">0</div>
+            <div class="k">Clean Sheets</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="primary mb-2" onclick="openModal('match-modal')">+ Add Match</button>
+
+      <h3>Recent Matches</h3>
+      <div id="matches-list" class="stack"></div>
+    </div>
+  </div>
+
+  <!-- Add Player Modal -->
+  <div id="player-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Add Player</h2>
+        <button class="close" onclick="closeModal('player-modal')">×</button>
+      </div>
+      <form id="player-form" class="stack">
+        <div>
+          <label>Player Name</label>
+          <input type="text" id="player-name" required />
+        </div>
+        <div>
+          <label>Team Name</label>
+          <input type="text" id="player-team" />
+        </div>
+        <div>
+          <label>Competition</label>
+          <input type="text" id="player-competition" placeholder="e.g. Premier League" />
+        </div>
+        <div>
+          <label>Season</label>
+          <input type="text" id="player-season" value="2025/26" />
+        </div>
+        <div class="pillbar">
+          <label class="pill active" onclick="togglePill(this)">
+            <input type="radio" name="player-public" value="false" checked /> Private
+          </label>
+          <label class="pill" onclick="togglePill(this)">
+            <input type="radio" name="player-public" value="true" /> Public
+          </label>
+        </div>
+        <button type="submit" class="primary">Add Player</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Match Modal -->
+  <div id="match-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Add Match</h2>
+        <button class="close" onclick="closeModal('match-modal')">×</button>
+      </div>
+      <form id="match-form" class="match-form">
+        <div>
+          <label>Match Date</label>
+          <input type="date" id="match-date" required />
+        </div>
+        <div>
+          <label>Your Team</label>
+          <input type="text" id="match-team" required />
+        </div>
+        <div>
+          <label>Opponent</label>
+          <input type="text" id="match-opponent" required />
+        </div>
+        <div class="row">
+          <div>
+            <label>Minutes Played</label>
+            <input type="number" id="match-minutes" value="90" />
+          </div>
+          <div>
+            <label>Rating (1-10)</label>
+            <input type="number" id="match-rating" min="1" max="10" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Goals Conceded</label>
+            <input type="number" id="match-conceded" value="0" min="0" />
+          </div>
+          <div>
+            <label>Saves</label>
+            <input type="number" id="match-saves" value="0" min="0" />
+          </div>
+        </div>
+        <div class="pillbar">
+          <label class="pill" onclick="togglePill(this, 'clean-sheet')">
+            <input type="checkbox" name="clean-sheet" /> Clean Sheet
+          </label>
+          <label class="pill" onclick="togglePill(this, 'penalty-save')">
+            <input type="checkbox" name="penalty-save" /> Penalty Saved
+          </label>
+        </div>
+        <div>
+          <label>Notes</label>
+          <input type="text" id="match-notes" />
+        </div>
+        <button type="submit" class="primary">Save Match</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = '/api';
+    let token = localStorage.getItem('gk_token');
+    let currentUser = null;
+    let currentPlayerId = null;
+
+    // Auth tabs
+    document.querySelectorAll('#screen-auth .tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('#screen-auth .tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('auth-btn').textContent = tab.dataset.tab === 'login' ? 'Login' : 'Register';
+        document.getElementById('name-field').classList.toggle('hidden', tab.dataset.tab === 'login');
+      });
+    });
+
+    // View tabs
+    document.querySelectorAll('.tabs .tab[data-view]').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tabs .tab[data-view]').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('view-my-players').classList.toggle('hidden', tab.dataset.view !== 'players');
+        document.getElementById('view-public').classList.toggle('hidden', tab.dataset.view !== 'public');
+        if (tab.dataset.view === 'public') loadPublicPlayers();
+      });
+    });
+
+    // Auth form
+    document.getElementById('auth-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const displayName = document.getElementById('display-name').value;
+      const isRegister = document.querySelector('#screen-auth .tab.active').dataset.tab === 'register';
+      
+      const endpoint = isRegister ? '/auth/register' : '/auth/login';
+      const body = isRegister ? { username, email, password, display_name: displayName } : { email, password };
+
+      try {
+        const res = await fetch(API_URL + endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        
+        if (!res.ok) throw new Error(data.error || 'Auth failed');
+        
+        token = data.token;
+        localStorage.setItem('gk_token', token);
+        loadUser();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+
+    // Player form
+    document.getElementById('player-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const name = document.getElementById('player-name').value;
+      const team = document.getElementById('player-team').value;
+      const competition = document.getElementById('player-competition').value;
+      const season = document.getElementById('player-season').value;
+      const isPublic = document.querySelector('input[name="player-public"]:checked').value === 'true';
+
+      try {
+        const res = await fetch(API_URL + '/players', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({
+            player_name: name,
+            team_name: team,
+            competition,
+            season,
+            is_public: isPublic
+          })
+        });
+        
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to create player');
+        }
+        
+        closeModal('player-modal');
+        document.getElementById('player-form').reset();
+        loadMyPlayers();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+
+    // Match form
+    document.getElementById('match-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (!currentPlayerId) return;
+
+      const matchDate = document.getElementById('match-date').value;
+      const matchTeam = document.getElementById('match-team').value;
+      const opponent = document.getElementById('match-opponent').value;
+      const minutes = parseInt(document.getElementById('match-minutes').value) || 0;
+      const conceded = parseInt(document.getElementById('match-conceded').value) || 0;
+      const saves = parseInt(document.getElementById('match-saves').value) || 0;
+      const rating = document.getElementById('match-rating').value;
+      const notes = document.getElementById('match-notes').value;
+      const cleanSheet = document.querySelector('input[name="clean-sheet"]').checked;
+      const penaltySave = document.querySelector('input[name="penalty-save"]').checked;
+
+      try {
+        const res = await fetch(API_URL + '/players/' + currentPlayerId + '/matches', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({
+            match_date: matchDate,
+            match_team: matchTeam,
+            opponent_team: opponent,
+            minutes_played: minutes,
+            goals_conceded: conceded,
+            saves,
+            clean_sheet: cleanSheet,
+            penalty_save: penaltySave,
+            rating: rating || null,
+            notes
+          })
+        });
+        
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to add match');
+        }
+        
+        closeModal('match-modal');
+        document.getElementById('match-form').reset();
+        loadPlayerDetail(currentPlayerId);
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+
+    // Search
+    document.getElementById('search').addEventListener('input', debounce(loadPublicPlayers, 300));
+    document.getElementById('filter-competition').addEventListener('change', loadPublicPlayers);
+
+    function debounce(fn, ms) {
+      let timeout;
+      return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => fn(...args), ms);
+      };
+    }
+
+    async function loadUser() {
+      try {
+        const res = await fetch(API_URL + '/auth/me', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          currentUser = data.user;
+          document.getElementById('user-name').textContent = currentUser.display_name || currentUser.username;
+          showScreen('main');
+          loadMyPlayers();
+        } else {
+          logout();
+        }
+      } catch {
+        logout();
+      }
+    }
+
+    async function loadMyPlayers() {
+      const container = document.getElementById('my-players-list');
+      container.innerHTML = '<div class="loading">Loading...</div>';
+      
+      try {
+        const res = await fetch(API_URL + '/players/my', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        
+        if (!data.players || data.players.length === 0) {
+          container.innerHTML = '<div class="empty">No players yet. Add one!</div>';
+          return;
+        }
+        
+        container.innerHTML = data.players.map(p => renderPlayerCard(p, true)).join('');
+      } catch (err) {
+        container.innerHTML = '<div class="empty">Failed to load players</div>';
+      }
+    }
+
+    async function loadPublicPlayers() {
+      const container = document.getElementById('public-players-list');
+      container.innerHTML = '<div class="loading">Loading...</div>';
+      
+      const search = document.getElementById('search').value;
+      const competition = document.getElementById('filter-competition').value;
+      
+      let url = API_URL + '/players?';
+      if (search) url += 'search=' + encodeURIComponent(search) + '&';
+      if (competition) url += 'competition=' + encodeURIComponent(competition);
+      
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        // Update competition filter
+        if (data.filters?.competitions) {
+          const select = document.getElementById('filter-competition');
+          const current = select.value;
+          select.innerHTML = '<option value="">All Competitions</option>' + 
+            data.filters.competitions.map(c => `<option value="${c}">${c}</option>`).join('');
+          select.value = current;
+        }
+        
+        if (!data.players || data.players.length === 0) {
+          container.innerHTML = '<div class="empty">No players found</div>';
+          return;
+        }
+        
+        container.innerHTML = data.players.map(p => renderPlayerCard(p, false)).join('');
+      } catch (err) {
+        container.innerHTML = '<div class="empty">Failed to load players</div>';
+      }
+    }
+
+    async function loadPlayerDetail(id) {
+      currentPlayerId = id;
+      
+      try {
+        const res = await fetch(API_URL + '/players/' + id, {
+          headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+        });
+        const data = await res.json();
+        
+        const p = data.player;
+        document.getElementById('detail-name').textContent = p.player_name;
+        document.getElementById('detail-team').textContent = [p.team_name, p.competition, p.season].filter(Boolean).join(' • ');
+        
+        document.getElementById('stat-matches').textContent = p.matches_played || 0;
+        document.getElementById('stat-saves').textContent = p.saves || 0;
+        document.getElementById('stat-conceded').textContent = p.goals_conceded || 0;
+        document.getElementById('stat-cleansheets').textContent = p.clean_sheets || 0;
+        
+        // Matches
+        const matchesContainer = document.getElementById('matches-list');
+        if (!data.matches || data.matches.length === 0) {
+          matchesContainer.innerHTML = '<div class="empty">No matches recorded</div>';
+        } else {
+          matchesContainer.innerHTML = data.matches.map(m => `
+            <div class="card">
+              <div class="row">
+                <div>
+                  <strong>${m.match_team}</strong> vs <strong>${m.opponent_team}</strong>
+                </div>
+                <div class="muted">${new Date(m.match_date).toLocaleDateString()}</div>
+              </div>
+              <div class="stats">
+                <div class="stat">
+                  <div class="v">${m.minutes_played || 0}</div>
+                  <div class="k">Min</div>
+                </div>
+                <div class="stat">
+                  <div class="v">${m.saves || 0}</div>
+                  <div class="k">Saves</div>
+                </div>
+                <div class="stat">
+                  <div class="v">${m.goals_conceded || 0}</div>
+                  <div class="k">Conceded</div>
+                </div>
+                <div class="stat">
+                  <div class="v">${m.clean_sheet ? '✅' : '❌'}</div>
+                  <div class="k">Clean</div>
+                </div>
+              </div>
+              ${m.notes ? `<p class="muted mt-4">${m.notes}</p>` : ''}
             </div>
+          `).join('');
+        }
+        
+        showScreen('detail');
+      } catch (err) {
+        alert('Failed to load player');
+      }
+    }
+
+    async function deletePlayer() {
+      if (!confirm('Delete this player and all matches?')) return;
+      
+      try {
+        const res = await fetch(API_URL + '/players/' + currentPlayerId, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        
+        if (!res.ok) throw new Error('Failed to delete');
+        
+        showScreen('main');
+        loadMyPlayers();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    function renderPlayerCard(p, isOwner) {
+      const pct = p.matches_played ? Math.round((p.saves / (p.saves + p.goals_conceded)) * 100) : 0;
+      return `
+        <div class="player-card" onclick="loadPlayerDetail(${p.id})">
+          <div class="name">${p.player_name}</div>
+          <div class="team">${[p.team_name, p.competition, p.season].filter(Boolean).join(' • ')}</div>
+          <div class="stats-row">
+            <span>${p.matches_played || 0} matches</span>
+            <span>${p.saves || 0} saves</span>
+            <span>${p.clean_sheets || 0} clean sheets</span>
+          </div>
         </div>
-    </nav>
+      `;
+    }
 
-    <main class="container" id="app">
-        <!-- Content loaded dynamically -->
-    </main>
+    function showScreen(screen) {
+      document.getElementById('screen-auth').classList.add('hidden');
+      document.getElementById('screen-main').classList.add('hidden');
+      document.getElementById('screen-detail').classList.add('hidden');
+      document.getElementById('screen-' + screen).classList.remove('hidden');
+    }
 
-    <footer>
-        <div class="container">
-            <p>© 2026 Goalkeeper Stats</p>
-        </div>
-    </footer>
+    function openModal(id) {
+      document.getElementById(id).classList.add('open');
+      // Set default date to today
+      if (id === 'match-modal') {
+        document.getElementById('match-date').value = new Date().toISOString().split('T')[0];
+      }
+    }
 
-    <script src="/js/app.js"></script>
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+
+    function togglePill(el, type) {
+      const parent = el.parentElement;
+      if (type === 'clean-sheet' || type === 'penalty-save') {
+        // Checkbox toggle
+        const input = el.querySelector('input');
+        input.checked = !input.checked;
+        el.classList.toggle('active', input.checked);
+      } else {
+        // Radio toggle
+        parent.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+        el.classList.add('active');
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('gk_token');
+      token = null;
+      currentUser = null;
+      showScreen('auth');
+    }
+
+    // Init
+    if (token) {
+      loadUser();
+    } else {
+      showScreen('auth');
+    }
+  </script>
 </body>
 </html>
