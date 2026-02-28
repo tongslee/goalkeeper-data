@@ -373,13 +373,31 @@
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); if(id==='match-modal')document.getElementById('match-date').value=new Date().toISOString().split('T')[0]; }
     function logout() { localStorage.removeItem('gk_token'); token = null; showScreen('auth'); }
     
-    // Init - always show auth first, then verify token
+    // Init - always show auth first, verify token with server
     showScreen('auth');
-    if (token) {
-      fetch('/api/auth/me', {headers: {'Authorization': 'Bearer ' + token}})
-        .then(res => { if(res.ok) { showScreen('main'); loadMyPlayers(); } else { localStorage.removeItem('gk_token'); token = null; }})
-        .catch(() => { localStorage.removeItem('gk_token'); token = null; });
+    closeModal('player-modal');
+    closeModal('match-modal');
+    
+    async function init() {
+      const savedToken = localStorage.getItem('gk_token');
+      if (savedToken) {
+        try {
+          const res = await fetch('/api/auth/me', {
+            headers: {'Authorization': 'Bearer ' + savedToken}
+          });
+          if (res.ok) {
+            token = savedToken;
+            showScreen('main');
+            loadMyPlayers();
+          } else {
+            localStorage.removeItem('gk_token');
+          }
+        } catch(e) {
+          localStorage.removeItem('gk_token');
+        }
+      }
     }
+    init();
   </script>
 </body>
 </html>
