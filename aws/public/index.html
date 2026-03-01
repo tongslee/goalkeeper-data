@@ -365,9 +365,9 @@
 
     // Utils
     function showScreen(s) {
-      document.getElementById('screen-auth').classList.toggle('hidden', s !== 'auth');
-      document.getElementById('screen-main').classList.toggle('hidden', s !== 'main');
-      document.getElementById('screen-detail').classList.toggle('hidden', s !== 'detail');
+      document.getElementById('screen-auth').style.display = s === 'auth' ? 'block' : 'none';
+      document.getElementById('screen-main').style.display = s === 'main' ? 'block' : 'none';
+      document.getElementById('screen-detail').style.display = s === 'detail' ? 'block' : 'none';
     }
 
     function openModal(id) { document.getElementById(id).style.display = 'flex'; if(id==='match-modal')document.getElementById('match-date').value=new Date().toISOString().split('T')[0]; }
