@@ -1679,7 +1679,8 @@ async function createNewPlayer() {
         player_name: name,
         team_name: team,
         competition: 'Rec League',
-        season: '2025/26'
+        season: '2025/26',
+        is_public: true
       })
     });
     const data = await res.json();

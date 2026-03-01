@@ -37,7 +37,7 @@ router.get('/', async (req, res) => {
                    clean_sheets, penalties_saved, goals_scored, assists,
                    is_public, is_verified, source_name, created_at, updated_at
             FROM player_stats 
-            WHERE is_public = true
+            WHERE 1=1
         `;
         const params = [];
         let paramCount = 0;
