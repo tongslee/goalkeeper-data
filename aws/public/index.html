@@ -1,407 +1,1697 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-<meta http-equiv="Pragma" content="no-cache" />
-<meta http-equiv="Expires" content="0" />
-  <title>Goalkeeper Stats</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Daniel GK Stats – Prototype v0.5.3 + Export</title>
   <style>
-    :root { --bg: #0c0f14; --panel: #121720; --muted: #8492a6; --text: #e8eefc; --accent: #3aa0ff; --success: #22c55e; --danger: #ef4444; --radius: 16px; }
-    html,body{background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;margin:0;min-height:100vh}
-    .container{max-width:720px;margin:0 auto;padding:16px}
-    h1{font-size:24px;text-align:center;margin:0 0 8px}
-    h2{font-size:20px}
-    .card{background:var(--panel);border-radius:var(--radius);padding:20px}
-    .stack{display:grid;gap:12px}
-    label{font-size:14px;color:var(--muted);display:block;margin-bottom:4px}
-    input{font-size:16px;border-radius:12px;border:1px solid #1f2733;background:#0f1520;color:var(--text);padding:14px;width:100%;box-sizing:border-box}
-    button{font-size:16px;border-radius:12px;border:1px solid #1f2733;background:#0f1520;color:var(--text);padding:14px;width:100%;cursor:pointer;font-weight:600}
-    button.primary{background:var(--accent);color:#001e3c;border:none}
-    button.small{padding:10px;font-size:14px;width:auto}
-    .tabs{display:flex;gap:4px;margin-bottom:16px;background:#0f1520;padding:4px;border-radius:12px}
-    .tab{flex:1;padding:14px;text-align:center;border-radius:8px;cursor:pointer;font-size:16px;font-weight:600;color:var(--muted);-webkit-tap-highlight-color:transparent}
-    .tab.active{background:var(--accent);color:#001e3c}
-    .hidden{display:none}
-    .mt-2{margin-top:8px}
-    .mb-2{margin-bottom:8px}
-    .mb-4{margin-bottom:16px}
-    .muted{color:var(--muted)}
-    .text-center{text-align:center}
-    .error{color:var(--danger);text-align:center;font-size:14px}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-    .stat{background:#0f1520;padding:12px;border-radius:12px;border:1px solid #1f2733;text-align:center}
-    .stat .v{font-size:20px;font-weight:800}
-    .stat .k{font-size:10px;color:var(--muted)}
-    .bar{background:#0f1520;border-radius:999px;border:1px solid #1f2733;height:10px;margin:8px 0;overflow:hidden}
-    .bar>div{height:100%;background:var(--accent);width:0%}
-    .bar>div.high{background:var(--success)}
+    :root {
+      --bg: #0c0f14;
+      --panel: #121720;
+      --muted: #8492a6;
+      --text: #e8eefc;
+      --accent: #3aa0ff;
+      --edge: #ffa23a;
+      --edgeText: #2a1400;
+      --shadow: 0 8px 30px rgba(0, 0, 0, .4);
+      --radius: 16px;
+      --pad: 14px;
+    }
+
+    html,
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
+      margin: 0;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0 0 10px;
+    }
+
+    .card {
+      background: var(--panel);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: var(--pad);
+    }
+
+    .stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    label {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    input,
+    select,
+    button {
+      font-size: 16px;
+      border-radius: 12px;
+      border: 1px solid #1f2733;
+      background: #0f1520;
+      color: var(--text);
+      padding: 12px 14px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .pillbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pill {
+      padding: 10px 12px;
+      background: #0f1520;
+      border: 1px solid #1f2733;
+      border-radius: 999px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .pill.active {
+      outline: 2px solid var(--accent);
+      background: #0b1220;
+    }
+
+    .grid-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .bigbtn {
+      padding: 20px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+    }
+
+    .bigbtn.saved {
+      background: #0a2c1b;
+      color: #b7ffd3;
+    }
+
+    .bigbtn.conceded {
+      background: #2b0a0a;
+      color: #ffc2c2;
+    }
+
+    .bigbtn.offtarget {
+      background: #1f2330;
+      color: #e5e7eb;
+    }
+
+    .bigbtn.other {
+      background: #101826;
+      color: #c9dafe;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .toolbar .btn {
+      flex-basis: 48%;
+      flex-grow: 1;
+    }
+
+    .toolbar .info {
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: bold;
+      text-align: center;
+      margin-left: auto;
+      flex-basis: 100%;
+      flex-grow: 1;
+    }
+
+    /* Modal */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .6);
+      display: none;
+      align-items: flex-end;
+    }
+
+    .modal.open {
+      display: flex;
+    }
+
+    .sheet {
+      background: var(--panel);
+      width: 100%;
+      border-top-left-radius: 18px;
+      border-top-right-radius: 18px;
+      padding: 14px;
+      max-height: 85vh;
+      overflow: auto;
+    }
+
+    .btn {
+      padding: 12px;
+      background: #0f1520;
+      border: 1px solid #1f2733;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .btn.primary {
+      background: var(--accent);
+      color: #001e3c;
+      border: none;
+      font-weight: 700;
+    }
+
+    .btn.ghost {
+      background: transparent;
+      border: 1px solid #273244;
+    }
+
+    /* Goal grid */
+    .goalgrid {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 6px;
+      background: #0b111b;
+      padding: 8px;
+      border-radius: 12px;
+      border: 1px solid #1f2733;
+    }
+
+    .cell {
+      aspect-ratio: 1 / 1;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: #0f1622;
+      color: #89a;
+      font-size: 12px;
+      border: 1px solid #1a2332;
+    }
+
+    .cell.edge,
+    .cell.barrow {
+      background: rgba(255, 162, 58, .18);
+      color: var(--edgeText);
+      border-color: rgba(255, 162, 58, .35);
+    }
+
+    .cell.post {
+      background: rgba(255, 162, 58, .26);
+      border-color: rgba(255, 162, 58, .45);
+    }
+
+    .cell.active {
+      outline: 2px solid var(--accent);
+      color: #dff;
+    }
+
+    /* Shot Origin grid */
+    .origin-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    @media (min-width: 420px) {
+      .origin-grid {
+        grid-template-columns: repeat(5, 1fr);
+      }
+    }
+
+    .origin-tile {
+      padding: 10px;
+      border: 1px solid #223048;
+      border-radius: 10px;
+      background: #0f1622;
+      text-align: center;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .origin-tile.active {
+      outline: 2px solid var(--accent);
+      background: #0b1220;
+    }
+
+    .subhead {
+      grid-column: 1 / -1;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* Stats strip */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .stat {
+      background: #0f1520;
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid #1f2733;
+      text-align: center;
+    }
+
+    .stat .v {
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .stat .k {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Shot Type tiles (from history) */
+    .shot-type-stats {
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    
+    @media (min-width: 640px) {
+      .shot-type-stats {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+    
+    .stat.muted-active {
+      background: #151d2a;
+      border-color: #24324a;
+    }
+    
+    .stat .sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+        /* Shot origin legend */
+    .origin-legend {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin: 4px 0 8px;
+      flex-wrap: wrap;
+    }
+
+    .origin-legend .dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      margin-right: 4px;
+    }
+
+    .dot-6yd {
+      background: rgba(255, 100, 100, 0.9);   /* red */
+    }
+
+    .dot-18yd {
+      background: rgba(255, 255, 100, 0.9);   /* yellow */
+    }
+
+    .dot-corner {
+      background: rgba(100, 200, 100, 0.9);   /* green */
+    }
+
+    .dot-outside {
+      background: rgba(58, 160, 255, 0.9);    /* blue */
+    }
+
+    /* Shot Heatmap legend */
+    .heat-legend {
+      display: flex;
+      gap: 16px;
+      margin: 8px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .heat-legend div {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-box {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      border: 1px solid #1a2332;
+    }
+
+    .legend-box.outside {
+      background: rgb(110,110,140);
+    }
+
+    .legend-box.frame {
+      background: rgb(255,160,58);
+    }
+
+    .legend-box.goal {
+      background: rgb(58,160,255);
+    }
+    
+    /* Summary */
+    .bars {
+      display: grid;
+      gap: 8px;
+    }
+
+    .bar {
+      background: #0f1520;
+      border-radius: 999px;
+      border: 1px solid #1f2733;
+      overflow: hidden;
+      height: 16px;
+    }
+
+    .bar>div {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+    }
+
+    .legend {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    /* Shot Origin heatmap: 3×7 grid */
+    .heat7 {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      background: #0b111b;
+      padding: 8px;
+      border-radius: 12px;
+      border: 1px solid #1f2733;
+    }
+
+    .heat7 .hc {
+      aspect-ratio: 1/1;
+      border-radius: 6px;
+      border: 1px solid #1a2332;
+      position: relative;
+    }
+
+    .heat7 .hc span {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 12px;
+      line-height: 1.2;
+      color: #cbd5e1;
+      mix-blend-mode: screen;
+    }
+
+    .heat {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 4px;
+      background: #0b111b;
+      padding: 8px;
+      border-radius: 12px;
+      border: 1px solid #1f2733;
+    }
+
+    .heat .hc {
+      aspect-ratio: 1/1;
+      border-radius: 6px;
+      border: 1px solid #1a2332;
+      position: relative;
+    }
+
+    .heat .hc span {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 12px;
+      line-height: 1.2;
+      color: #cbd5e1;
+      mix-blend-mode: screen;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .small {
+      font-size: 12px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* --- Small phones: iPhone 12 Pro width (<= 400px) --- */
+    @media (max-width: 400px) {
+      .container {
+        padding: 12px;
+      }
+
+      .card {
+        padding: 12px;
+        border-radius: 12px;
+      }
+
+      h1 {
+        font-size: 28px;
+        line-height: 1.2;
+      }
+
+      /* Stack fields vertically so nothing collides */
+      .row {
+        grid-template-columns: 1fr;
+      }
+
+      /* Make Grass/Turf sit nicely in two equal pills */
+      #pitch .pillbar {
+        gap: 8px;
+      }
+
+      #pitch .pill {
+        flex: 1 1 48%;
+        text-align: center;
+      }
+
+      /* Prevent odd overflows from native inputs/buttons */
+      input,
+      select,
+      button {
+        max-width: 100%;
+      }
+
+      /* smaller text in Shot Heatmap cells on tiny viewports */
+      .heat .hc span {
+        font-size: 9px;
+      }
+    }
+
+    /* Shot Origin: 3×7 grid styled like Goal Grid */
+    .origin7 {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      background: #0b111b;
+      padding: 8px;
+      border-radius: 12px;
+      border: 1px solid #1f2733;
+    }
+
+    .origin7 .ocell {
+      aspect-ratio: 1/1;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: #0f1622;
+      color: #e8eefc;
+      font-weight: 700;
+      font-size: 12px;
+      border: 1px solid #223048;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* Highlighted zones */
+    .origin7 .ocell[data-value*="6yd"] {
+      background: rgba(255, 100, 100, 0.25);
+    }
+
+    .origin7 .ocell[data-value*="18yd"] {
+      background: rgba(255, 255, 100, 0.25);
+    }
+
+    .origin7 .ocell[data-value="Corner – L"],
+    .origin7 .ocell[data-value="Corner – R"] {
+      background: rgba(100, 200, 100, 0.3);
+    }
+
+    /* Keep active highlight on top */
+    .origin7 .ocell.active {
+      outline: 2px solid var(--accent);
+      background: #0b1220 !important;
+    }
+
+    .origin7 .ocell.active {
+      outline: 2px solid var(--accent);
+      background: #0b1220;
+    }
+
+    /* -------- Placement (matches your diagram) -------- */
+    /* Row 1: 6-yard (centered; L/R a bit wider) */
+    .l6 {
+      grid-column: 3 / span 2;
+      grid-row: 1;
+    }
+
+    .c6 {
+      grid-column: 5;
+      grid-row: 1;
+    }
+
+    .r6 {
+      grid-column: 6 / span 2;
+      grid-row: 1;
+    }
+
+    /* Row 2: 18-yard */
+    .lw18 {
+      grid-column: 2;
+      grid-row: 2;
+    }
+
+    .l18 {
+      grid-column: 3 / span 2;
+      grid-row: 2;
+    }
+
+    .c18 {
+      grid-column: 5;
+      grid-row: 2;
+    }
+
+    .r18 {
+      grid-column: 6 / span 2;
+      grid-row: 2;
+    }
+
+    .rw18 {
+      grid-column: 8;
+      grid-row: 2;
+    }
+
+    /* Row 3: outside + corners (wide L/R) */
+    .cl {
+      grid-column: 1;
+      grid-row: 3;
+    }
+
+    .lw {
+      grid-column: 2;
+      grid-row: 3;
+    }
+
+    .l {
+      grid-column: 3 / span 2;
+      grid-row: 3;
+    }
+
+    .c {
+      grid-column: 5;
+      grid-row: 3;
+    }
+
+    .r {
+      grid-column: 6 / span 2;
+      grid-row: 3;
+    }
+
+    .rw {
+      grid-column: 8;
+      grid-row: 3;
+    }
+
+    .cr {
+      grid-column: 9;
+      grid-row: 3;
+    }
+
+    /* small phones */
+    @media (max-width: 400px) {
+      .origin-rect {
+        grid-template-rows: 50px 56px 56px;
+      }
+
+      .origin-rect .pk {
+        width: 40px;
+        height: 26px;
+        line-height: 26px;
+      }
+    }
+
+    /* General overflow guards (helps Safari) */
+    html,
+    body {
+      overflow-x: hidden;
+    }
+
+    .stack,
+    .row {
+      min-width: 0;
+    }
   </style>
 </head>
+
 <body>
   <div class="container">
-    <!-- Auth Screen -->
-    <div id="screen-auth">
-      <div class="card">
-        <h1>🥅 Goalkeeper Stats</h1>
-        <p class="muted text-center mb-4">Track your performance</p>
-        
-        <div class="tabs">
-          <div class="tab active" id="tab-login" onclick="showTab('login')">Login</div>
-          <div class="tab" id="tab-register" onclick="showTab('register')">Register</div>
-        </div>
-
-        <form id="auth-form" onsubmit="handleAuth(event)">
-          <div id="field-username">
-            <label>Username</label>
-            <input type="text" id="username" />
-          </div>
-          
-          <div class="mt-2">
-            <label>Email</label>
-            <input type="email" id="email" required />
-          </div>
-          
-          <div class="mt-2">
-            <label>Password</label>
-            <input type="password" id="password" required minlength="8" />
-          </div>
-          
-          <div id="field-name" class="mt-2 hidden">
-            <label>Display Name</label>
-            <input type="text" id="display-name" />
-          </div>
-          
-          <button type="submit" class="primary mt-4" id="auth-btn">Login</button>
-        </form>
-        
-        <p id="auth-error" class="error mt-2"></p>
-      </div>
-    </div>
-
-    <!-- Main Screen -->
-    <div id="screen-main" class="hidden">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <div style="font-size:20px;font-weight:700;color:var(--accent)">🥅 GK Stats</div>
-        <button class="small" onclick="logout()" style="width:auto;padding:8px 16px;font-size:14px">Logout</button>
-      </div>
-      <div class="tabs">
-        <div class="tab active" id="tab-players" onclick="switchView('players')">My Players</div>
-        <div class="tab" id="tab-browse" onclick="switchView('browse')">Browse</div>
-        <div class="tab" id="tab-leaderboard" onclick="switchView('leaderboard')">Leaderboard</div>
+    <!-- Start screen -->
+    <div id="screen-start" class="card stack">
+      <h1>Start New Game</h1>
+      
+      <!-- Player selector -->
+      <div class="stack" style="margin-bottom:16px">
+        <label>Player</label>
+        <select id="player-select" onchange="onPlayerSelect(this.value)">
+          <option value="">-- Select player --</option>
+        </select>
       </div>
       
-      <div id="view-players">
-        <button class="primary mb-4" onclick="openModal('player-modal')">+ Add Goalkeeper</button>
-        <div id="players-list"></div>
-      </div>
-      
-      <div id="view-browse" class="hidden">
-        <input type="text" id="search" placeholder="Search..." class="mb-2" oninput="loadBrowse()" />
-        <div id="browse-list"></div>
-      </div>
-      
-      <div id="view-leaderboard" class="hidden">
-        <div id="leaderboard-list"></div>
-      </div>
-    </div>
-
-    <!-- Detail Screen -->
-    <div id="screen-detail" class="hidden">
-      <button class="small mb-4" onclick="showScreen('main')">← Back</button>
-      <button class="small danger" onclick="deletePlayer()" style="float:right;background:var(--danger);color:#fff;border:none">Delete</button>
-      
-      <h2 id="detail-name"></h2>
-      <p class="muted" id="detail-meta"></p>
-      
-      <div class="card mb-4">
+      <div class="stack">
+        <div><label>Daniel’s Team</label>
+          <select id="team">
+            <option value="AIS MS White">AIS MS White</option>
+            <option value="CF U13 Elite">CF U13 Elite</option>
+            <option value="CF U15 Black">CF U15 Black</option>
+          </select></div>
+        <div><label>Opponent</label>
+          <input id="opponent" placeholder="e.g., Inter Atlanta 13B Royal" /></div>
         <div class="row">
-          <div class="stat"><div class="v" id="stat-matches">0</div><div class="k">Matches</div></div>
-          <div class="stat"><div class="v" id="stat-saves">0</div><div class="k">Saves</div></div>
-          <div class="stat"><div class="v" id="stat-conceded">0</div><div class="k">Conceded</div></div>
-          <div class="stat"><div class="v" id="stat-cleansheets">0</div><div class="k">Clean</div></div>
+          <div><label>Date/Time</label><input type="datetime-local" id="datetime" /></div>
+          <div><label>Pitch</label>
+            <div class="pillbar" id="pitch">
+              <div class="pill active" data-value="Grass" role="button" tabindex="0" aria-pressed="true">Grass</div>
+              <div class="pill" data-value="Turf" role="button" tabindex="0" aria-pressed="false">Turf</div>
+            </div>
+          </div>
         </div>
-        <div class="stat-row mt-2">
-          <div class="stat"><div class="v" id="stat-savepct">0%</div><div class="k">Save %</div></div>
-          <div class="stat"><div class="v" id="stat-penalties">0</div><div class="k">Pen.Saved</div></div>
-          <div class="stat"><div class="v" id="stat-rating">-</div><div class="k">Avg Rating</div></div>
-          <div class="stat"><div class="v" id="stat-minutes">0</div><div class="k">Minutes</div></div>
+        <button id="startBtn" class="btn primary">Start Game</button>
+      </div>
+    </div>
+
+    <!-- Game screen -->
+    <div id="screen-game" class="card stack hidden">
+      <div class="toolbar">
+        <button id="endBtn" class="btn">End</button>
+        <button id="undoBtn" class="btn ghost">Undo</button>
+        <div class="info" id="gameInfo"></div>
+      </div>
+      <div class="grid-buttons">
+        <button class="bigbtn saved" data-res="Saved">Shot Saved</button>
+        <button class="bigbtn conceded" data-res="Conceded">Shot Conceded</button>
+        <button class="bigbtn offtarget" data-res="Off Target">Off Target</button>
+        <button class="bigbtn other" data-res="Other Action">Other Action</button>
+      </div>
+      <div class="stats">
+        <div class="stat">
+          <div class="v" id="cSaves">0</div>
+          <div class="k">Saves</div>
+        </div>
+        <div class="stat">
+          <div class="v" id="cConceded">0</div>
+          <div class="k">Conceded</div>
+        </div>
+        <div class="stat">
+          <div class="v" id="cOff">0</div>
+          <div class="k">Off Target</div>
+        </div>
+        <div class="stat">
+          <div class="v" id="cSavePct">0%</div>
+          <div class="k">Save %</div>
         </div>
       </div>
-      
-      <button class="primary mb-4" onclick="openModal('match-modal')">+ Add Match</button>
-      
-      <h3>Match History</h3>
-      <div id="matches-list"></div>
     </div>
-  </div>
 
-  <!-- Add Player Modal -->
-  <div id="player-modal" class="modal" style="display:none">
-    <div class="card">
-      <h2>Add Goalkeeper</h2>
-      <form onsubmit="handlePlayerSubmit(event)">
-        <div><label>Name</label><input type="text" id="player-name" required /></div>
-        <div class="mt-2"><label>Team</label><input type="text" id="player-team" /></div>
-        <div class="row mt-2"><div><label>Competition</label><input type="text" id="player-competition" /></div><div><label>Season</label><input type="text" id="player-season" value="2025/26" /></div></div>
-        <button type="submit" class="primary mt-4">Add</button>
-        <button type="button" onclick="closeModal('player-modal')" class="mt-2">Cancel</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Add Match Modal -->
-  <div id="match-modal" class="modal" style="display:none">
-    <div class="card">
-      <h2>Add Match</h2>
-      <form onsubmit="handleMatchSubmit(event)">
-        <div class="row"><div><label>Date</label><input type="date" id="match-date" required /></div><div><label>Minutes</label><input type="number" id="match-minutes" value="90" /></div></div>
-        <div class="row mt-2"><div><label>Your Team</label><input type="text" id="match-team" required /></div><div><label>Opponent</label><input type="text" id="match-opponent" required /></div></div>
-        <div class="row mt-2"><div><label>Saves</label><input type="number" id="match-saves" value="0" min="0" /></div><div><label>Goals</label><input type="number" id="match-conceded" value="0" min="0" /></div></div>
-        <div class="mt-2"><label>Rating (1-10)</label><input type="number" id="match-rating" min="1" max="10" /></div>
-        <div class="mt-2">
-          <label><input type="checkbox" id="match-cleansheet" /> Clean Sheet</label>
-          <label><input type="checkbox" id="match-penalty" /> Penalty Saved</label>
+    <!-- Summary screen -->
+    <div id="screen-summary" class="card stack hidden">
+      <h2>Game Summary</h2>
+      <div class="stats">
+        <div class="stat">
+          <div class="v" id="tSaves">0</div>
+          <div class="k">Saves</div>
         </div>
-        <button type="submit" class="primary mt-4">Save</button>
-        <button type="button" onclick="closeModal('match-modal')" class="mt-2">Cancel</button>
-      </form>
+        <div class="stat">
+          <div class="v" id="tConceded">0</div>
+          <div class="k">Conceded</div>
+        </div>
+        <div class="stat">
+          <div class="v" id="tOff">0</div>
+          <div class="k">Off Target</div>
+        </div>
+        <div class="stat">
+          <div class="v" id="tSavePct">0%</div>
+          <div class="k">Save %</div>
+        </div>
+      </div>
+      <h3>Shot Types</h3>
+      <div class="stats shot-type-stats" id="shotTypeStats"></div>
+
+      <h3>Shot Origin Heatmap</h3>
+      <div class="origin-legend small">
+        <span class="dot dot-6yd"></span> 6 yd box
+        <span class="dot dot-18yd"></span> 18 yd box
+        <span class="dot dot-corner"></span> Corner
+        <span class="dot dot-outside"></span> Outside
+      </div>
+      <div class="heat7" id="originHeat"></div>
+
+      <h3>Shot Heatmap</h3>
+      <div class="heat" id="heat"></div>
+      <div class="heat-legend small">
+        <div><span class="legend-box outside"></span> Outside</div>
+        <div><span class="legend-box frame"></span> Frame</div>
+        <div><span class="legend-box goal"></span> On Target</div>
+      </div>
+
+      <!-- ✅ Export JSON button added -->
+      <div class="stack">
+        <button id="exportJson" class="btn">Export JSON</button>
+        <button id="newGame" class="btn primary">Start New Game</button>
+      </div>
     </div>
   </div>
 
-  <style>
-    .modal{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;padding:16px}
-    .player-card{background:#0f1520;border:1px solid #1f2733;border-radius:12px;padding:14px;margin-bottom:8px;cursor:pointer}
-    .player-card .name{font-weight:600;font-size:18px}
-    .player-card .info{font-size:14px;color:var(--muted);margin-top:4px}
-    .match-card{background:#0f1520;border:1px solid #1f2733;border-radius:12px;padding:14px;margin-bottom:8px}
-    .match-card .teams{font-weight:600}
-    .match-card .date{font-size:13px;color:var(--muted)}
-    .empty{text-align:center;padding:30px;color:var(--muted)}
-    .danger{background:var(--danger);color:#fff;border:none}
-  </style>
+  <!-- Modal -->
+  <div id="modal" class="modal">
+    <div class="sheet">
+      <!-- Result Label -->
+      <div class="section">
+        <h3 id="resultLabel" style="margin:0 0 8px; text-align:center; color:#3aa0ff;"></h3>
+      </div>
+
+      <!-- Method -->
+      <div class="section"><label>Method</label>
+        <div class="method-group">
+          <div class="subhead">Claimed</div>
+          <div class="pillbar" id="method-claimed">
+            <div class="pill" data-value="Claimed – In Position">In Position</div>
+            <div class="pill" data-value="Claimed – Dived">Dived</div>
+          </div>
+
+          <div class="subhead">Blocked – Hand</div>
+          <div class="pillbar" id="method-hand">
+            <div class="pill" data-value="Blocked – Hand – In Position">In Position</div>
+            <div class="pill" data-value="Blocked – Hand – Dived">Dived</div>
+          </div>
+
+          <div class="subhead">Blocked – Body</div>
+          <div class="pillbar" id="method-body">
+            <div class="pill" data-value="Blocked – Body – In Position">In Position</div>
+            <div class="pill" data-value="Blocked – Body – Dived">Dived</div>
+          </div>
+
+          <div class="subhead">Blocked – Leg</div>
+          <div class="pillbar" id="method-leg">
+            <div class="pill" data-value="Blocked – Leg – In Position">In Position</div>
+            <div class="pill" data-value="Blocked – Leg – Dived">Dived</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shot Origin (3 × 7 grid like Goal Grid) -->
+      <div class="section"><label>Shot Origin</label>
+        <div id="origin7" class="origin7">
+          <!-- Row 1 -->
+          <div class="ocell" data-value="Corner – L">CL</div>
+          <div class="ocell" data-value="18yd – LW">18LW</div>
+          <div class="ocell" data-value="6yd – Left">6L</div>
+          <div class="ocell" data-value="6yd – Center">6C</div>
+          <div class="ocell" data-value="6yd – Right">6R</div>
+          <div class="ocell" data-value="18yd – RW">18RW</div>
+          <div class="ocell" data-value="Corner – R">CR</div>
+
+          <!-- Row 2 -->
+          <div class="ocell" data-value="Outside – LW">Out LW</div>
+          <div class="ocell" data-value="18yd – LW">18LW</div>
+          <div class="ocell" data-value="18yd – L">18L</div>
+          <div class="ocell" data-value="18yd – C">18C</div>
+          <div class="ocell" data-value="18yd – R">18R</div>
+          <div class="ocell" data-value="18yd – RW">18RW</div>
+          <div class="ocell" data-value="Outside – RW">Out RW</div>
+
+          <!-- Row 3 -->
+          <div class="ocell" data-value="Outside – LW">Out LW</div>
+          <div class="ocell" data-value="Outside – L">Out L</div>
+          <div class="ocell" data-value="Outside – L">Out L</div>
+          <div class="ocell" data-value="Outside – C">Out C</div>
+          <div class="ocell" data-value="Outside – R">Out R</div>
+          <div class="ocell" data-value="Outside – R">Out R</div>
+          <div class="ocell" data-value="Outside – RW">Out RW</div>
+        </div>
+        <div class="small muted">3×7 grid: top = 6yd + corners · middle = 18yd · bottom = outside</div>
+      </div>
+
+      <!-- Location -->
+      <div class="section"><label>Location (Goal Grid)</label>
+        <div id="goalGrid" class="goalgrid"></div>
+        <div class="small muted">Rows: Over / Top Bar / Top / Mid / Low. Sides & posts highlighted.</div>
+      </div>
+
+      <!-- Shot Type -->
+      <div class="section"><label>Shot Type</label>
+        <div class="pillbar" id="shotType">
+          <div class="pill" data-value="Open Play">Open Play</div>
+          <div class="pill" data-value="Header">Header</div>
+          <div class="pill" data-value="Free Kick">Free Kick</div>
+          <div class="pill" data-value="1v1 – Challenged">1v1 – Challenged</div>
+          <div class="pill" data-value="1v1 – Stayed Back">1v1 – Stayed Back</div>
+          <div class="pill" data-value="Corner – Inswing">Corner – Inswing</div>
+          <div class="pill" data-value="Corner – Outswing">Corner – Outswing</div>
+          <div class="pill" data-value="PK – Regulation">PK – Regulation</div>
+          <div class="pill" data-value="PK – Shootout">PK – Shootout</div>
+        </div>
+      </div>
+
+      <!-- Shot Strength -->
+      <div class="section"><label>Shot Strength</label>
+        <div class="pillbar" id="strength">
+          <div class="pill" data-value="Strong">Strong</div>
+          <div class="pill" data-value="Weak">Weak</div>
+          <div class="pill" data-value="Ground">Ground</div>
+          <div class="pill" data-value="Flight">Flight</div>
+          <div class="pill" data-value="Chip">Chip</div>
+          <div class="pill" data-value="Tap">Tap</div>
+          <div class="pill" data-value="Redirect">Redirect</div>
+        </div>
+      </div>
+
+      <div class="section" style="display:flex; gap:8px;">
+        <button id="saveDetail" class="btn primary">Save</button>
+        <button id="skipDetail" class="btn ghost">Skip</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Heatmap Detail Modal -->
+  <div id="heatmapModal" class="modal">
+    <div class="sheet">
+      <h3 id="hmTitle" style="text-align:center; margin-top:0;"></h3>
+      <p id="hmBody" style="text-align:center; font-size:16px; margin:12px 0;"></p>
+      <button id="hmClose" class="btn primary">Close</button>
+    </div>
+  </div>
 
   <script>
-    let token = localStorage.getItem('gk_token');
-    let currentTab = 'login';
-    let currentView = 'players';
-    let currentPlayerId = null;
+    const $ = s => document.querySelector(s),
+      $$ = s => Array.from(document.querySelectorAll(s));
+    let session = null;
+    let pending = null;
 
-    // Tab switching
-    function showTab(tab) {
-      currentTab = tab;
-      document.getElementById('tab-login').classList.toggle('active', tab === 'login');
-      document.getElementById('tab-register').classList.toggle('active', tab === 'register');
-      document.getElementById('auth-btn').textContent = tab === 'login' ? 'Login' : 'Register';
-      document.getElementById('field-username').style.display = tab === 'register' ? 'block' : 'none';
-      document.getElementById('field-name').classList.toggle('hidden', tab === 'login');
-      document.getElementById('username').required = (tab === 'register');
-    }
+    const ORIG_KEYS = ['6yd – Left', '6yd – Center', '6yd – Right', '18yd – LW', '18yd – L', '18yd – C', '18yd – R',
+      '18yd – RW', 'Outside – LW', 'Outside – L', 'Outside – C', 'Outside – R', 'Outside – RW', 'Corner – L', 'PK',
+      'Corner – R'
+    ];
+    const TYPE_KEYS = ['Open Play', 'Header', 'Free Kick', '1v1 – Challenged', '1v1 – Stayed Back', 'Corner – Inswing',
+      'Corner – Outswing', 'PK – Regulation', 'PK – Shootout'
+    ];
 
-    function switchView(view) {
-      currentView = view;
-      document.getElementById('tab-players').classList.toggle('active', view === 'players');
-      document.getElementById('tab-browse').classList.toggle('active', view === 'browse');
-      document.getElementById('tab-leaderboard').classList.toggle('active', view === 'leaderboard');
-      document.getElementById('view-players').classList.toggle('hidden', view !== 'players');
-      document.getElementById('view-browse').classList.toggle('hidden', view !== 'browse');
-      document.getElementById('view-leaderboard').classList.toggle('hidden', view !== 'leaderboard');
-      if (view === 'players') loadMyPlayers();
-      if (view === 'browse') loadBrowse();
-      if (view === 'leaderboard') loadLeaderboard();
-    }
+    document.addEventListener('DOMContentLoaded', () => {
+      // Default datetime
+      const dt = $('#datetime');
+      if (dt) {
+        const d = new Date(),
+          p = n => String(n).padStart(2, '0');
+        dt.value =
+          `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+      }
 
-    // Auth
-    async function handleAuth(e) {
-      e.preventDefault();
-      const username = document.getElementById('username').value;
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const displayName = document.getElementById('display-name').value;
+      // Pitch toggle
+      const pitch = $('#pitch');
+      pitch.addEventListener('click', e => {
+        const pill = e.target.closest('.pill');
+        if (!pill) return;
+        $$('#pitch .pill').forEach(p => {
+          p.classList.remove('active');
+          p.setAttribute('aria-pressed', 'false');
+        });
+        pill.classList.add('active');
+        pill.setAttribute('aria-pressed', 'true');
+      });
+
+      // Buttons
+      $('#startBtn').addEventListener('click', startGame);
+      $('#endBtn').addEventListener('click', endGame);
+      $('#undoBtn').addEventListener('click', undoLast);
+      $('#newGame').addEventListener('click', () => show('screen-start'));
+
+      // ✅ Export JSON
+      const exportBtn = document.getElementById('exportJson');
+      if (exportBtn) exportBtn.addEventListener('click', () => {
+        const safe = session || {
+          meta: {},
+          events: []
+        };
+        download('gk-session.json', JSON.stringify(safe, null, 2));
+      });
+
+      // Main in-game buttons
+      $$('.bigbtn').forEach(b => b.addEventListener('click', () => handleMainTap(b.dataset.res)));
+
+      // Modal selections
+      // Shot Origin (3×7 grid)
+      document.getElementById('origin7').addEventListener('click', e => {
+        const el = e.target.closest('.ocell');
+        if (!el) return;
+        const wasActive = el.classList.contains('active');
+        document.querySelectorAll('#origin7 .ocell').forEach(x => x.classList.remove('active'));
+        if (!wasActive) el.classList.add('active');   // click again -> unselect
+      });
+
+      $('#shotType').addEventListener('click', e => {
+        const pill = e.target.closest('.pill');
+        if (!pill) return;
       
-      const endpoint = currentTab === 'register' ? '/api/auth/register' : '/api/auth/login';
-      const body = currentTab === 'register' ? {username, email, password, display_name: displayName} : {email, password};
+        const wasActive = pill.classList.contains('active');
+        $$('#shotType .pill').forEach(p => p.classList.remove('active'));
       
-      try {
-        const res = await fetch(endpoint, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed');
-        token = data.token;
-        localStorage.setItem('gk_token', token);
-        showScreen('main');
-        loadMyPlayers();
-      } catch(err) { document.getElementById('auth-error').textContent = err.message; }
+        // clicking an already-active pill clears everything (no selection)
+        if (!wasActive) pill.classList.add('active');
+      });
+      
+      ['method-claimed', 'method-hand', 'method-body', 'method-leg'].forEach(id => {
+        const el = document.getElementById(id);
+        el.addEventListener('click', e => {
+          const pill = e.target.closest('.pill');
+          if (!pill) return;
+      
+          const wasActive = pill.classList.contains('active');
+      
+          // Clear ALL method pills first
+          document.querySelectorAll('.method-group .pill')
+            .forEach(p => p.classList.remove('active'));
+      
+          // If it wasn’t active before, make it active; if it was, leave all off
+          if (!wasActive) pill.classList.add('active');
+        });
+      });
+      
+      // Strength pill selection
+     $('#strength').addEventListener('click', e => {
+        const pill = e.target.closest('.pill');
+        if (!pill) return;
+      
+        const wasActive = pill.classList.contains('active');
+        $$('#strength .pill').forEach(p => p.classList.remove('active'));
+      
+        if (!wasActive) pill.classList.add('active');  // second click = unselect
+      });
+
+      // Save / Skip
+      document.getElementById('saveDetail').addEventListener('click', saveDetail);
+      document.getElementById('skipDetail').addEventListener('click', skipDetail);
+
+      // Build goal grid
+      buildGoalGrid();
+
+      // Tag origin cells with row/col so heatmap can count exact taps
+      (function initOriginPositions() {
+        const cells = document.querySelectorAll('#origin7 .ocell');
+        cells.forEach((el, i) => {
+          const r = Math.floor(i / 7) + 1; // 1..3
+          const c = (i % 7) + 1; // 1..7
+          el.dataset.pos = `r${r}c${c}`;
+        });
+      })();
+    });
+
+    function startGame() {
+      session = {
+        meta: {
+          team: $('#team').value,
+          opponent: $('#opponent').value || '',
+          pitch: $('#pitch .pill.active')?.dataset.value || 'Grass',
+          startedAt: Date.now()
+        },
+        events: []
+      };
+      $('#gameInfo').textContent = `${session.meta.team} vs ${session.meta.opponent||'—'} · ${session.meta.pitch}`;
+      show('screen-game');
+      refresh();
     }
 
-    // Players
-    async function loadMyPlayers() {
-      const c = document.getElementById('players-list');
-      if (!token) return c.innerHTML = '<div class="empty">Please login</div>';
-      try {
-        const res = await fetch('/api/players/my', {headers: {'Authorization': 'Bearer ' + token}});
-        const data = await res.json();
-        if (!data.players?.length) return c.innerHTML = '<div class="empty">No players yet. Add one!</div>';
-        c.innerHTML = data.players.map(p => 
-          '<div class="player-card" onclick="loadPlayerDetail('+p.id+')"><div class="name">'+p.player_name+'</div><div class="info">'+(p.team_name||'')+' - '+(p.matches_played||0)+' matches, '+(p.saves||0)+' saves</div></div>'
-        ).join('');
-      } catch { c.innerHTML = '<div class="empty">Error loading</div>'; }
+    function endGame() {
+      showSummary();
     }
 
-    async function loadBrowse() {
-      const c = document.getElementById('browse-list');
-      const search = document.getElementById('search').value;
-      let url = '/api/players?';
-      if (search) url += 'search=' + encodeURIComponent(search);
-      try {
-        const res = await fetch(url);
-        const data = await res.json();
-        if (!data.players?.length) return c.innerHTML = '<div class="empty">No players found</div>';
-        c.innerHTML = data.players.map(p => 
-          '<div class="player-card" onclick="loadPlayerDetail('+p.id+')"><div class="name">'+p.player_name+'</div><div class="info">'+(p.team_name||'')+' - '+(p.matches_played||0)+' matches</div></div>'
-        ).join('');
-      } catch { c.innerHTML = '<div class="empty">Error</div>'; }
+    function undoLast() {
+      if (session?.events?.length) {
+        session.events.pop();
+        refresh();
+      }
     }
 
-    async function loadLeaderboard() {
-      const c = document.getElementById('leaderboard-list');
-      try {
-        const res = await fetch('/api/players?sort=saves');
-        const data = await res.json();
-        if (!data.players?.length) return c.innerHTML = '<div class="empty">No players</div>';
-        c.innerHTML = data.players.map((p,i) => 
-          '<div class="player-card" onclick="loadPlayerDetail('+p.id+')"><div class="name">#'+(i+1)+' '+p.player_name+'</div><div class="info">'+(p.team_name||'')+' - '+(p.saves||0)+' saves</div></div>'
-        ).join('');
-      } catch { c.innerHTML = '<div class="empty">Error</div>'; }
+    function resetDetailSelections() {
+      // Clear method groups
+      ['method-claimed', 'method-hand', 'method-body', 'method-leg'].forEach(id => {
+        document.querySelectorAll(`#${id} .pill`).forEach(p => p.classList.remove('active'));
+      });
+    
+      // Clear shot origin grid
+      document.querySelectorAll('#origin7 .ocell').forEach(c => c.classList.remove('active'));
+    
+      // Clear goal grid selection
+      document.querySelectorAll('#goalGrid .cell').forEach(c => c.classList.remove('active'));
+    
+      // Clear shot type
+      document.querySelectorAll('#shotType .pill').forEach(p => p.classList.remove('active'));
+    
+      // Clear shot strength
+      document.querySelectorAll('#strength .pill').forEach(p => p.classList.remove('active'));
+    }
+    
+    function handleMainTap(result) {
+      // Always start with a clean detail modal
+      resetDetailSelections();
+    
+      pending = {
+        id: (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2)),
+        t: Date.now(),
+        result,
+        details: {}
+      };
+    
+      // Set label at top of modal
+      const lbl = document.getElementById('resultLabel');
+      if (lbl) lbl.textContent = result.toUpperCase();
+    
+      document.getElementById('modal').classList.add('open');
     }
 
-    // Detail
-    async function loadPlayerDetail(id) {
-      currentPlayerId = id;
-      try {
-        const res = await fetch('/api/players/'+id, {headers: token ? {'Authorization': 'Bearer '+token} : {}});
-        const d = await res.json();
-        const p = d.player;
-        
-        document.getElementById('detail-name').textContent = p.player_name;
-        document.getElementById('detail-meta').textContent = [p.team_name, p.competition, p.season].filter(Boolean).join(' • ');
-        
-        const m = p.matches_played||0, s = p.saves||0, c = p.goals_conceded||0, cs = p.clean_sheets||0;
-        document.getElementById('stat-matches').textContent = m;
-        document.getElementById('stat-saves').textContent = s;
-        document.getElementById('stat-conceded').textContent = c;
-        document.getElementById('stat-cleansheets').textContent = cs;
-        document.getElementById('stat-penalties').textContent = p.penalties_saved||0;
-        document.getElementById('stat-minutes').textContent = p.minutes_played||0;
-        
-        const sp = (s+c) > 0 ? Math.round(s/(s+c)*100) : 0;
-        document.getElementById('stat-savepct').textContent = sp + '%';
-        
-        // Rating
-        if (d.matches?.length) {
-          const rs = d.matches.filter(x => x.rating).map(x => parseFloat(x.rating));
-          document.getElementById('stat-rating').textContent = rs.length ? (rs.reduce((a,b) => a+b, 0) / rs.length).toFixed(1) : '-';
+    function saveDetail() {
+      if (!pending) return;
+      pending.details = collectDetail();
+      session.events.push(pending);
+      pending = null;
+      document.getElementById('modal').classList.remove('open');
+      refresh();
+    }
+
+    function skipDetail() {
+      if (!pending) return;
+      session.events.push(pending);
+      pending = null;
+      document.getElementById('modal').classList.remove('open');
+      refresh();
+    }
+
+    function collectDetail() {
+      const method = document.querySelector('.method-group .pill.active')?.dataset.value ||
+        document.querySelector('#method .pill.active')?.dataset.value || '';
+      const oEl = document.querySelector('#origin7 .ocell.active');
+      const origin = oEl?.dataset.value || '';
+      const originPos = oEl?.dataset.pos || '';
+      const shotType = document.querySelector('#shotType .pill.active')?.dataset.value || '';
+      const strength = document.querySelector('#strength .pill.active')?.dataset.value || '';
+
+      const cell = document.querySelector('#goalGrid .cell.active');
+      let location = '';
+      if (cell) {
+        const r = ['Over', 'Top Bar', 'Top', 'Mid', 'Low'][+cell.dataset.r];
+        const c = ['Left Outside', 'Left Post', 'Left', 'Left Center', 'Center', 'Right Center', 'Right', 'Right Post',
+          'Right Outside'
+        ][+cell.dataset.c];
+        location = `${r} / ${c}`;
+      }
+      return {
+        method,
+        origin,
+        originPos,
+        shotType,
+        strength,
+        location
+      };
+    }
+
+    function buildOriginHeat(elId, events) {
+      const el = document.getElementById(elId);
+      el.innerHTML = '';
+
+      const rows = 3, cols = 7;
+
+      const savedCounts    = Array.from({ length: rows }, () => Array(cols).fill(0));
+      const concededCounts = Array.from({ length: rows }, () => Array(cols).fill(0));
+      const totalCounts    = Array.from({ length: rows }, () => Array(cols).fill(0));
+      const posToLabel     = {};
+
+      const labelToFirstPos = {
+        'Corner – L':    'r1c1',
+        '18yd – LW':     'r1c2',
+        '6yd – Left':    'r1c3',
+        '6yd – Center':  'r1c4',
+        '6yd – Right':   'r1c5',
+        '18yd – RW':     'r1c6',
+        'Corner – R':    'r1c7',
+        'Outside – LW':  'r2c1',
+        '18yd – L':      'r2c3',
+        '18yd – C':      'r2c4',
+        '18yd – R':      'r2c5',
+        'Outside – RW':  'r2c7',
+        'Outside – L':   'r3c2',
+        'Outside – C':   'r3c4',
+        'Outside – R':   'r3c5'
+      };
+
+      events.forEach(ev => {
+        const label = ev.details?.origin || '';
+        const pos = ev.details?.originPos || labelToFirstPos[label];
+        if (!pos) return;
+
+        const r = Number(pos[1]) - 1;
+        const c = Number(pos[3]) - 1;
+        if (r < 0 || r >= rows || c < 0 || c >= cols) return;
+
+        if (ev.result === 'Saved')    savedCounts[r][c]++;
+        if (ev.result === 'Conceded') concededCounts[r][c]++;
+
+        if (ev.result === 'Saved' || ev.result === 'Conceded') {
+          totalCounts[r][c]++;
+          if (!posToLabel[pos]) posToLabel[pos] = label || pos;
         }
-        
-        // Matches
-        const mc = document.getElementById('matches-list');
-        if (!d.matches?.length) mc.innerHTML = '<div class="empty">No matches</div>';
-        else mc.innerHTML = d.matches.map(m => 
-          '<div class="match-card"><div class="teams">'+m.match_team+' vs '+m.opponent_team+'</div><div class="date">'+new Date(m.match_date).toLocaleDateString()+' - '+(m.minutes_played||0)+'min</div><div class="info">🧤'+m.saves+' saves, ⚽'+m.goals_conceded+' conceded'+(m.clean_sheet?', ✅ Clean':'')+(m.penalty_save?', ⭐ Penalties':'')+'</div></div>'
-        ).join('');
-        
-        showScreen('detail');
-      } catch { alert('Error loading'); }
-    }
+      });
 
-    async function deletePlayer() {
-      if (!confirm('Delete this player and all matches?')) return;
-      try {
-        await fetch('/api/players/'+currentPlayerId, {method: 'DELETE', headers: {'Authorization': 'Bearer '+token}});
-        showScreen('main');
-        loadMyPlayers();
-      } catch { alert('Error deleting'); }
-    }
+      const max = Math.max(1, ...totalCounts.flat());
 
-    // Forms
-    async function handlePlayerSubmit(e) {
-      e.preventDefault();
-      const body = {
-        player_name: document.getElementById('player-name').value,
-        team_name: document.getElementById('player-team').value,
-        competition: document.getElementById('player-competition').value,
-        season: document.getElementById('player-season').value
+      const zoneRGBA = (r, c, alpha) => {
+        if (r === 0 && (c === 2 || c === 3 || c === 4)) return `rgba(255,100,100,${alpha})`; // 6yd
+        if ((r === 0 && (c === 1 || c === 5)) || (r === 1 && c >= 1 && c <= 5))
+          return `rgba(255,255,100,${alpha})`;                                               // 18yd
+        if (r === 0 && (c === 0 || c === 6)) return `rgba(100,200,100,${alpha})`;           // corners
+        return `rgba(58,160,255,${alpha})`;                                                  // outside
       };
-      try {
-        const res = await fetch('/api/players', {method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer '+token}, body: JSON.stringify(body)});
-        if (!res.ok) throw new Error('Failed');
-        closeModal('player-modal');
-        e.target.reset();
-        loadMyPlayers();
-      } catch { alert('Error adding player'); }
-    }
 
-    async function handleMatchSubmit(e) {
-      e.preventDefault();
-      if (!currentPlayerId) return;
-      const body = {
-        match_date: document.getElementById('match-date').value,
-        match_team: document.getElementById('match-team').value,
-        opponent_team: document.getElementById('match-opponent').value,
-        minutes_played: parseInt(document.getElementById('match-minutes').value)||0,
-        saves: parseInt(document.getElementById('match-saves').value)||0,
-        goals_conceded: parseInt(document.getElementById('match-conceded').value)||0,
-        clean_sheet: document.getElementById('match-cleansheet').checked,
-        penalty_save: document.getElementById('match-penalty').checked,
-        rating: document.getElementById('match-rating').value || null
-      };
-      try {
-        const res = await fetch('/api/players/'+currentPlayerId+'/matches', {method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer '+token}, body: JSON.stringify(body)});
-        if (!res.ok) throw new Error('Failed');
-        closeModal('match-modal');
-        e.target.reset();
-        loadPlayerDetail(currentPlayerId);
-      } catch { alert('Error adding match'); }
-    }
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const total    = totalCounts[r][c];
+          const saved    = savedCounts[r][c];
+          const conceded = concededCounts[r][c];
 
-    // Utils
-    function showScreen(s) {
-      document.getElementById('screen-auth').style.display = s === 'auth' ? 'block' : 'none';
-      document.getElementById('screen-main').style.display = s === 'main' ? 'block' : 'none';
-      document.getElementById('screen-detail').style.display = s === 'detail' ? 'block' : 'none';
-    }
+          const cell = document.createElement('div');
+          cell.className = 'hc';
 
-    function openModal(id) { document.getElementById(id).style.display = 'flex'; if(id==='match-modal')document.getElementById('match-date').value=new Date().toISOString().split('T')[0]; }
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; if(id==='match-modal')document.getElementById('match-date').value=new Date().toISOString().split('T')[0]; }
-    function logout() { localStorage.removeItem('gk_token'); token = null; showScreen('auth'); }
-    
-    // Init - ALWAYS show auth first, verify token with server
-    // Force show auth screen immediately - hide everything else
-    document.getElementById('screen-auth').style.display = 'block';
-    document.getElementById('screen-main').style.display = 'none';
-    document.getElementById('screen-detail').style.display = 'none';
-    document.getElementById('player-modal').style.display = 'none';
-    document.getElementById('match-modal').style.display = 'none';
-    
-    async function init() {
-      const savedToken = localStorage.getItem('gk_token');
-      if (savedToken) {
-        try {
-          const res = await fetch('/api/auth/me', {
-            headers: {'Authorization': 'Bearer ' + savedToken}
-          });
-          if (res.ok) {
-            token = savedToken;
-            showScreen('main');
-            loadMyPlayers();
+          const intensity = total / max;
+          const a = 0.12 + intensity * 0.60;
+          cell.style.background = zoneRGBA(r, c, a);
+
+          const span = document.createElement('span');
+          if (total > 0) {
+            const pct = Math.round((saved / total) * 100);
+            span.innerHTML = `${saved}/${conceded}<br>${pct}%`;
           } else {
-            localStorage.removeItem('gk_token');
+            span.textContent = '';
           }
-        } catch(e) {
-          localStorage.removeItem('gk_token');
+
+          const key = `r${r+1}c${c+1}`;
+          cell.dataset.label    = posToLabel[`r${r+1}c${c+1}`] || key;
+          cell.dataset.saved    = saved;
+          cell.dataset.conceded = conceded;
+
+          cell.appendChild(span);
+          el.appendChild(cell);
         }
       }
     }
-    init();
+
+    function buildGoalGrid() {
+      const labels = ['L-OUT', 'L-POST', 'LEFT', 'L-CEN', 'CENTER', 'R-CEN', 'RIGHT', 'R-POST', 'R-OUT'];
+      const g = document.getElementById('goalGrid');
+      g.innerHTML = '';
+      for (let r = 0; r < 5; r++) {
+        for (let c = 0; c < 9; c++) {
+          const d = document.createElement('div');
+          d.className = 'cell';
+          d.dataset.r = r;
+          d.dataset.c = c;
+          if (c === 0 || c === 1 || c === 7 || c === 8) d.classList.add('edge');
+          if (c === 1 || c === 7) d.classList.add('post');
+          if (r === 0 || r === 1) d.classList.add('barrow');
+          d.title = `${['Over','Top Bar','Top','Mid','Low'][r]} / ${labels[c]}`;
+          d.textContent = ['Ov', 'TB', 'T', 'M', 'L'][r];
+          d.addEventListener('click', () => {
+            const wasActive = d.classList.contains('active');
+            document.querySelectorAll('#goalGrid .cell').forEach(x => x.classList.remove('active'));
+            if (!wasActive) d.classList.add('active');  // second click clears selection
+          });
+          g.appendChild(d);
+        }
+      }
+    }
+
+    function refresh() {
+      const s = session.events.filter(e => e.result === 'Saved').length;
+      const c = session.events.filter(e => e.result === 'Conceded').length;
+      const o = session.events.filter(e => e.result === 'Off Target').length;
+      const on = s + c,
+        pct = on ? Math.round(s / on * 100) : 0;
+      document.getElementById('cSaves').textContent = s;
+      document.getElementById('cConceded').textContent = c;
+      document.getElementById('cOff').textContent = o;
+      document.getElementById('cSavePct').textContent = pct + '%';
+    }
+
+    function buildShotTypeStats(events) {
+      const el = document.getElementById('shotTypeStats');
+      if (!el) return;
+      el.innerHTML = '';
+    
+      const stats = new Map();
+      events.forEach(ev => {
+        const key = ev.details?.shotType || '';
+        if (!stats.has(key)) {
+          stats.set(key, { total: 0, saved: 0, conceded: 0, off: 0 });
+        }
+        const s = stats.get(key);
+        s.total++;
+        if (ev.result === 'Saved') s.saved++;
+        else if (ev.result === 'Conceded') s.conceded++;
+        else if (ev.result === 'Off Target') s.off++;
+      });
+    
+      TYPE_KEYS.forEach(label => {
+        const s = stats.get(label) || { total: 0, saved: 0, conceded: 0, off: 0 };
+        const onTarget = s.saved + s.conceded;
+        const pct = onTarget ? Math.round((s.saved / onTarget) * 100) : 0;
+    
+        const card = document.createElement('div');
+        card.className = 'stat';
+        if (s.total > 0) card.classList.add('muted-active');
+    
+        card.dataset.label = label || 'Unspecified';
+        card.dataset.saved = s.saved;
+        card.dataset.conceded = s.conceded;
+        card.dataset.clickable = onTarget > 0 ? "1" : "0";
+    
+        const v = document.createElement('div');
+        v.className = 'v';
+        v.textContent = s.total;
+    
+        const k = document.createElement('div');
+        k.className = 'k';
+        k.textContent = label;
+    
+        const sub = document.createElement('div');
+        sub.className = 'sub';
+        sub.textContent = onTarget > 0 ? `${pct}% Save` : '';
+    
+        card.appendChild(v);
+        card.appendChild(k);
+        card.appendChild(sub);
+        el.appendChild(card);
+      });
+    }
+
+    function showSummary() {
+      const s = session.events.filter(e => e.result === 'Saved').length;
+      const c = session.events.filter(e => e.result === 'Conceded').length;
+      const o = session.events.filter(e => e.result === 'Off Target').length;
+      const on = s + c,
+        pct = on ? Math.round(s / on * 100) : 0;
+      document.getElementById('tSaves').textContent = s;
+      document.getElementById('tConceded').textContent = c;
+      document.getElementById('tOff').textContent = o;
+      document.getElementById('tSavePct').textContent = pct + '%';
+      buildShotTypeStats(session.events);
+      buildOriginHeat('originHeat', session.events);
+      buildHeat('heat', session.events);
+      show('screen-summary');
+      attachHeatmapClicks();
+    }
+
+    function buildBars(id, data) {
+      const el = document.getElementById(id);
+      el.innerHTML = '';
+      const max = Math.max(1, ...data.map(x => x.count));
+      data.forEach(({
+        label,
+        count
+      }) => {
+        const wrap = document.createElement('div');
+        const legend = document.createElement('div');
+        legend.className = 'legend';
+        legend.innerHTML = `<span>${label || '<i>Unspecified</i>'}</span><span>${count}</span>`;
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        const inner = document.createElement('div');
+        inner.style.width = `${(count/max)*100}%`;
+        bar.appendChild(inner);
+        wrap.appendChild(legend);
+        wrap.appendChild(bar);
+        el.appendChild(wrap);
+      });
+    }
+
+    function countBy(arr, fn, keys) {
+      const m = new Map();
+      arr.forEach(a => {
+        const k = fn(a) || '';
+        m.set(k, (m.get(k) || 0) + 1);
+      });
+      const rows = [];
+      (keys || Array.from(m.keys())).forEach(k => rows.push({
+        label: k,
+        count: m.get(k) || 0
+      }));
+      if (!keys) rows.push({
+        label: '',
+        count: m.get('') || 0
+      });
+      return rows;
+    }
+
+    function buildHeat(id, events) {
+      const el = document.getElementById(id);
+      el.innerHTML = '';
+
+      const rows = 5, cols = 9;
+
+      const savedCount    = Array.from({ length: rows }, () => Array(cols).fill(0));
+      const concededCount = Array.from({ length: rows }, () => Array(cols).fill(0));
+      const totalCounts   = Array.from({ length: rows }, () => Array(cols).fill(0));
+
+      const mapR = { Over:0, 'Top Bar':1, Top:2, Mid:3, Low:4 };
+      const mapC = {
+        'Left Outside':0,'Left Post':1,'Left':2,'Left Center':3,
+        'Center':4,'Right Center':5,'Right':6,'Right Post':7,'Right Outside':8
+      };
+
+      events.forEach(ev => {
+        const loc = ev.details.location;
+        if (!loc) return;
+        const [row, col] = loc.split(' / ').map(s => s.trim());
+        const r = mapR[row], c = mapC[col];
+        if (r == null || c == null) return;
+
+        if (ev.result === 'Saved')    savedCount[r][c]++;
+        if (ev.result === 'Conceded') concededCount[r][c]++;
+        if (ev.result === 'Saved' || ev.result === 'Conceded') totalCounts[r][c]++;
+      });
+
+      const max = Math.max(1, ...totalCounts.flat());
+
+      function getZone(r, c) {
+        const inGoal =
+          r >= 2 && r <= 4 &&      // Top, Mid, Low
+          c >= 2 && c <= 6;        // inside posts
+
+        if (inGoal) return 'goal';
+
+        const isCrossbar = (r === 1 && c >= 1 && c <= 7);
+        const isPosts    = ((c === 1 || c === 7) && r >= 2 && r <= 4);
+
+        if (isCrossbar || isPosts) return 'frame';
+
+        return 'outside';
+      }
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const total    = totalCounts[r][c];
+          const saved    = savedCount[r][c];
+          const conceded = concededCount[r][c];
+
+          const d = document.createElement('div');
+          d.className = 'hc';
+
+          const zone = getZone(r, c);
+          const intensity = total / max;
+          const a = 0.10 + intensity * 0.55;
+
+          let base;
+          if (zone === 'goal')      base = [58,160,255];  // on target
+          else if (zone === 'frame') base = [255,160,58]; // bar/posts
+          else                       base = [110,110,140]; // outside
+
+          d.style.background = `rgba(${base[0]},${base[1]},${base[2]},${a})`;
+
+          const s = document.createElement('span');
+          if (total > 0) {
+            const pct = Math.round((saved / total) * 100);
+            s.innerHTML = `${saved}/${conceded}<br>${pct}%`;
+          } else {
+            s.textContent = '';
+          }
+
+          d.dataset.saved    = saved;
+          d.dataset.conceded = conceded;
+          d.dataset.label =
+            `${['Over','Top Bar','Top','Mid','Low'][r]} / ${
+              ['Left Outside','Left Post','Left','Left Center','Center','Right Center','Right','Right Post','Right Outside'][c]
+            }`;
+
+          d.appendChild(s);
+          el.appendChild(d);
+        }
+      }
+    }
+
+    /* ---------------- HEATMAP CLICK MODAL ---------------- */
+
+    function attachHeatmapClicks() {
+      const modal = document.getElementById('heatmapModal');
+      const title = document.getElementById('hmTitle');
+      const body = document.getElementById('hmBody');
+      const close = document.getElementById('hmClose');
+    
+      function handler(e) {
+        const cell = e.currentTarget;
+        const saved = Number(cell.dataset.saved || 0);
+        const conceded = Number(cell.dataset.conceded || 0);
+        const total = saved + conceded;
+    
+        if (!total) return; // no data to show
+    
+        const pct = Math.round((saved / total) * 100);
+        title.textContent = cell.dataset.label || "Cell";
+        body.textContent = `${saved} Saved · ${conceded} Conceded (${pct}% Saved)`;
+    
+        modal.classList.add('open');
+      }
+    
+      // Shot Origin Heatmap
+      document.querySelectorAll('#originHeat .hc').forEach(cell => {
+        cell.addEventListener('click', handler);
+      });
+    
+      // Goal Location Heatmap
+      document.querySelectorAll('#heat .hc').forEach(cell => {
+        cell.addEventListener('click', handler);
+      });
+
+      // Shot Type tiles
+      document.querySelectorAll('#shotTypeStats .stat[data-clickable="1"]')
+        .forEach(card => {
+          card.addEventListener('click', handler);
+        });
+    
+      close.addEventListener('click', () => modal.classList.remove('open'));
+      modal.addEventListener('click', e => {
+        if (e.target === modal) modal.classList.remove('open');
+      });
+    }
+
+    function show(id) {
+      ['screen-start', 'screen-game', 'screen-summary'].forEach(x => document.getElementById(x).classList.add(
+        'hidden'));
+      document.getElementById(id).classList.remove('hidden');
+    }
+
+    // helper: download text as a file
+    function download(filename, text) {
+      const a = document.createElement('a');
+      a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(text);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
   </script>
 </body>
+
 </html>
+
+<script>
+// API Integration for Daniel's Goalkeeper Stats
+const API_URL = ''; // Same origin
+
+// Player management
+let currentPlayerId = null;
+
+// On load, check for player
+async function initPlayer() {
+  try {
+    // Get Daniel's player (hardcoded for now - Daniel is user id 3)
+    const res = await fetch('/api/players?search=Daniel');
+    const data = await res.json();
+    
+    if (data.players && data.players.length > 0) {
+      currentPlayerId = data.players[0].id;
+      console.log('Loaded player:', data.players[0].player_name);
+    } else {
+      // Create Daniel's player if not exists
+      const createRes = await fetch('/api/players', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          player_name: 'Daniel',
+          team_name: "Daniel's Team",
+          competition: 'Rec League',
+          season: '2025/26'
+        })
+      });
+      const newPlayer = await createRes.json();
+      currentPlayerId = newPlayer.player.id;
+      console.log('Created player:', currentPlayerId);
+    }
+  } catch(e) {
+    console.error('Player init error:', e);
+  }
+}
+
+// Save match to API when game ends
+async function saveMatchToAPI(session) {
+  if (!currentPlayerId) {
+    console.log('No player selected, skipping save');
+    return;
+  }
+  
+  try {
+    // Calculate stats from session
+    const events = session.events || [];
+    const saved = events.filter(e => e.result === 'Saved').length;
+    const conceded = events.filter(e => e.result === 'Conceded').length;
+    const cleanSheet = conceded === 0;
+    const totalMinutes = session.meta.minutes || 90;
+    
+    // Find date from meta or use today
+    const matchDate = session.meta.date || new Date().toISOString().split('T')[0];
+    const opponent = session.meta.opponent || 'Unknown';
+    const team = session.meta.team || "Daniel's Team";
+    
+    const res = await fetch('/api/players/' + currentPlayerId + '/matches', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        match_date: matchDate,
+        match_team: team,
+        opponent_team: opponent,
+        minutes_played: totalMinutes,
+        goals_conceded: conceded,
+        saves: saved,
+        clean_sheet: cleanSheet,
+        notes: 'Imported from app'
+      })
+    });
+    
+    const result = await res.json();
+    console.log('Match saved to API:', result);
+    alert('Match saved to database!');
+  } catch(e) {
+    console.error('Save error:', e);
+    alert('Error saving match: ' + e.message);
+  }
+}
+
+// Override the original endGame function to also save to API
+const originalEndGame = endGame;
+endGame = async function() {
+  // Call original function
+  originalEndGame();
+  // Save to API after showing summary
+  setTimeout(() => saveMatchToAPI(session), 1000);
+};
+
+// Initialize on load
+initPlayer();
+</script>
+
+<script>
+// Player Management Functions
+async function loadPlayers() {
+  try {
+    const res = await fetch('/api/players');
+    const data = await res.json();
+    const select = document.getElementById('player-select');
+    select.innerHTML = '<option value="">-- Select player --</option>';
+    
+    if (data.players) {
+      data.players.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.player_name + (p.team_name ? ' (' + p.team_name + ')' : '');
+        select.appendChild(opt);
+      });
+    }
+  } catch(e) {
+    console.error('Error loading players:', e);
+  }
+}
+
+function onPlayerSelect(playerId) {
+  currentPlayerId = playerId;
+  console.log('Selected player:', playerId);
+}
+
+async function createNewPlayer() {
+  const name = prompt('Enter player name:');
+  if (!name) return;
+  
+  const team = prompt('Enter team name (optional):') || '';
+  
+  try {
+    const res = await fetch('/api/players', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        player_name: name,
+        team_name: team,
+        competition: 'Rec League',
+        season: '2025/26'
+      })
+    });
+    const data = await res.json();
+    currentPlayerId = data.player.id;
+    alert('Player created: ' + name);
+    loadPlayers();
+    document.getElementById('player-select').value = currentPlayerId;
+  } catch(e) {
+    alert('Error creating player: ' + e.message);
+  }
+}
+
+// Load players on init
+loadPlayers();
+</script>
