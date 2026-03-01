@@ -137,7 +137,7 @@
   </div>
 
   <!-- Add Player Modal -->
-  <div id="player-modal" class="modal hidden">
+  <div id="player-modal" class="modal" style="display:none">
     <div class="card">
       <h2>Add Goalkeeper</h2>
       <form onsubmit="handlePlayerSubmit(event)">
@@ -151,7 +151,7 @@
   </div>
 
   <!-- Add Match Modal -->
-  <div id="match-modal" class="modal hidden">
+  <div id="match-modal" class="modal" style="display:none">
     <div class="card">
       <h2>Add Match</h2>
       <form onsubmit="handleMatchSubmit(event)">
@@ -370,15 +370,17 @@
       document.getElementById('screen-detail').classList.toggle('hidden', s !== 'detail');
     }
 
-    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-    function closeModal(id) { document.getElementById(id).classList.add('hidden'); if(id==='match-modal')document.getElementById('match-date').value=new Date().toISOString().split('T')[0]; }
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; if(id==='match-modal')document.getElementById('match-date').value=new Date().toISOString().split('T')[0]; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; if(id==='match-modal')document.getElementById('match-date').value=new Date().toISOString().split('T')[0]; }
     function logout() { localStorage.removeItem('gk_token'); token = null; showScreen('auth'); }
     
     // Init - ALWAYS show auth first, verify token with server
-    // Force show auth screen immediately
+    // Force show auth screen immediately - hide everything else
     document.getElementById('screen-auth').style.display = 'block';
     document.getElementById('screen-main').style.display = 'none';
     document.getElementById('screen-detail').style.display = 'none';
+    document.getElementById('player-modal').style.display = 'none';
+    document.getElementById('match-modal').style.display = 'none';
     
     async function init() {
       const savedToken = localStorage.getItem('gk_token');
