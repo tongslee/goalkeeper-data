@@ -353,7 +353,7 @@
     // Fetch assignments from API
     async function fetchAssignments() {
       try {
-        const response = await fetch(API_URL + '?action=get_assignments');
+        const response = await fetch(API_URL + '/assignments');
         const result = await response.json();
         if (result.success) {
           DATA.assignments = result.data;
@@ -747,7 +747,7 @@
       closeStatusDropdown();
       
       // Also save to API
-      fetch(API_URL + '?action=update_status', {
+      fetch(API_URL + '/assignments/update', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: 'id=' + assignmentId + '&status=' + newStatus
