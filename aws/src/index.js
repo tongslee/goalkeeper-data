@@ -4,6 +4,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { Pool } = require('pg');
+const fs = require('fs');
+const https = require('https');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,7 +18,7 @@ const schoolPool = new Pool({
   user: 'postgres'
 });
 
-// Middleware FIRST
+// Middleware
 app.use(helmet({contentSecurityPolicy: false}));
 app.use(cors());
 app.use(express.json());
@@ -25,15 +27,11 @@ app.use(rateLimit({
     max: 100
 }));
 
-// API Routes - before static files
+// API Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/players', require('./routes/players'));
 
 // School Dashboard API
-app.get('/test', (req, res) => {
-  res.json({ test: 'hello' });
-});
-
 app.get('/api/assignments', async (req, res) => {
   try {
     const client = await schoolPool.connect();
@@ -64,9 +62,18 @@ app.post('/api/assignments/update', async (req, res) => {
   }
 });
 
+// Test route
+app.get('/test', (req, res) => res.json({ test: 'hello' }));
+
 // Static files
 app.use(express.static('public'));
 
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on port ${PORT}`);
+// HTTPS server
+const httpsOptions = {
+  key: fs.readFileSync('/etc/ssl/private/server.key'),
+  cert: fs.readFileSync('/etc/ssl/certs/server.crt')
+};
+
+https.createServer(httpsOptions, app).listen(PORT, '0.0.0.0', () => {
+    console.log(`HTTPS Server running on port ${PORT}`);
 });
