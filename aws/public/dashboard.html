@@ -350,19 +350,26 @@
     
     let DATA = { weeks: WEEKS, subjects: SUBJECTS, assignments: [] };
     
-    // Fetch assignments from API
+    // Fetch assignments and weeks from API
     async function fetchAssignments() {
       try {
-        const response = await fetch(API_URL + '/assignments');
-        const result = await response.json();
-        if (result.success) {
-          DATA.assignments = result.data;
+        const [assignmentsRes, weeksRes] = await Promise.all([
+          fetch(API_URL + '/assignments'),
+          fetch(API_URL + '/weeks').then(r => r.json()).catch(() => ({success: true, data: WEEKS}))
+        ]);
+        
+        const assignmentsResult = await assignmentsRes.json();
+        const weeksResult = weeksRes;
+        
+        if (assignmentsResult.success) {
+          DATA.assignments = assignmentsResult.data;
+          DATA.weeks = weeksResult.success ? weeksResult.data : WEEKS;
           document.getElementById('lastUpdated').textContent = 'Last updated: ' + new Date().toLocaleString();
           renderDashboard();
         }
       } catch (e) {
-        console.error('Failed to fetch assignments:', e);
-        document.getElementById('weeksContainer').innerHTML = '<div class="error">Failed to load assignments. Using offline data.</div>';
+        console.error('Failed to fetch:', e);
+        document.getElementById('weeksContainer').innerHTML = '<div class="error">Failed to load. Using offline data.</div>';
       }
     }
 

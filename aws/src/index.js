@@ -62,6 +62,16 @@ app.post('/api/assignments/update', async (req, res) => {
   }
 });
 
+// Get weeks
+app.get('/api/weeks', async (req, res) => {
+  try {
+    const result = await schoolPool.query('SELECT * FROM school_weeks ORDER BY week_start DESC');
+    res.json({ success: true, data: result.rows });
+  } catch (e) {
+    res.json({ success: false, error: e.message, data: [] });
+  }
+});
+
 // Test route
 app.get('/test', (req, res) => res.json({ test: 'hello' }));
 
