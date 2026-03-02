@@ -33,6 +33,7 @@ app.use('/api/players', require('./routes/players'));
 
 // School Dashboard API
 app.get('/api/assignments', async (req, res) => {
+  console.log('Assignments API hit');
   try {
     const client = await schoolPool.connect();
     try {
@@ -43,11 +44,13 @@ app.get('/api/assignments', async (req, res) => {
         LEFT JOIN school_weeks w ON a.week_id = w.id
         ORDER BY a.due_date ASC
       `);
+      console.log('Query result:', result.rows.length);
       res.json({ success: true, data: result.rows });
     finally {
       client.release();
     }
   } catch (e) {
+    console.log('Error:', e.message);
     res.json({ success: false, error: e.message, data: [] });
   }
 });
