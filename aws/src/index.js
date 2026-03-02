@@ -30,6 +30,10 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/players', require('./routes/players'));
 
 // School Dashboard API
+app.get('/test', (req, res) => {
+  res.json({ test: 'hello' });
+});
+
 app.get('/api/assignments', async (req, res) => {
   try {
     const client = await schoolPool.connect();
