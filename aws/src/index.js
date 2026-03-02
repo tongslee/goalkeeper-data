@@ -3,29 +3,12 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const { Pool } = require('pg');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(helmet());
-app.use(cors());
-app.use(express.json());
-app.use(express.static('public'));
-
-// Rate limiting
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100 // limit each IP to 100 requests per windowMs
-});
-app.use(limiter);
-
-// Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/players', require('./routes/players'));
-
-// School Dashboard API (Daniel's assignments)
-const { Pool } = require('pg');
+// Database pool
 const schoolPool = new Pool({
   host: 'localhost',
   port: 5432,
@@ -33,6 +16,22 @@ const schoolPool = new Pool({
   user: 'postgres'
 });
 
+// Middleware
+app.use(helmet({contentSecurityPolicy: false}));
+app.use(cors());
+app.use(express.json());
+
+// Rate limiting
+app.use(rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100
+}));
+
+// API Routes FIRST
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/players', require('./routes/players'));
+
+// School Dashboard API
 app.get('/api/assignments', async (req, res) => {
   try {
     const result = await schoolPool.query(`
@@ -58,19 +57,14 @@ app.post('/api/assignments/update', async (req, res) => {
   }
 });
 
+// Static files LAST
+app.use(express.static('public'));
+
 // Frontend routes
 app.get('*', (req, res) => {
     res.sendFile(__dirname + '/public/index.html');
 });
 
-// Error handling
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ error: 'Something went wrong!' });
-});
-
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
 });
-
-module.exports = app;
