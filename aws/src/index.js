@@ -34,16 +34,21 @@ app.use('/api/players', require('./routes/players'));
 // School Dashboard API
 app.get('/api/assignments', async (req, res) => {
   try {
-    const result = await schoolPool.query(`
-      SELECT a.*, s.display_name, s.color, w.week_start, w.week_end
-      FROM school_assignments a
-      LEFT JOIN school_subjects s ON a.subject_id = s.id
-      LEFT JOIN school_weeks w ON a.week_id = w.id
-      ORDER BY a.due_date ASC
-    `);
-    res.json({ success: true, data: result.rows });
+    const client = await schoolPool.connect();
+    try {
+      const result = await client.query(`
+        SELECT a.*, s.display_name, s.color, w.week_start, w.week_end
+        FROM school_assignments a
+        LEFT JOIN school_subjects s ON a.subject_id = s.id
+        LEFT JOIN school_weeks w ON a.week_id = w.id
+        ORDER BY a.due_date ASC
+      `);
+      res.json({ success: true, data: result.rows });
+    finally {
+      client.release();
+    }
   } catch (e) {
-    res.json({ success: false, error: e.message });
+    res.json({ success: false, error: e.message, data: [] });
   }
 });
 
