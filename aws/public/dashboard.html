@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>The Command Center</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary: #4f46e5;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-light: #64748b;
+      --border: #e2e8f0;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #3b82f6;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .header {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header h1 { font-size: 1.5rem; font-weight: 600; }
+    .header-actions { display: flex; gap: 0.5rem; align-items: center; }
+    .btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: #4338ca; }
+    .btn-secondary { background: var(--border); color: var(--text); }
+    .btn-active { background: var(--primary); color: white; }
+    
+    /* Focus View Styles */
+    .focus-view { display: none; }
+    .focus-view.active { display: block; }
+    .weeks-container.hidden { display: none; }
+    
+    .urgency-section { margin-bottom: 1.5rem; }
+    .urgency-header { 
+      padding: 1rem; 
+      border-radius: 8px; 
+      margin-bottom: 0.75rem;
+      font-weight: 600;
+    }
+    .urgency-this-week { 
+      background: #fef2f2; 
+      border-left: 4px solid #ef4444;
+      color: #b91c1c;
+    }
+    .urgency-next-week { 
+      background: #fffbeb; 
+      border-left: 4px solid #f59e0b;
+      color: #b45309;
+    }
+    .urgency-two-weeks { 
+      background: #eff6ff; 
+      border-left: 4px solid #3b82f6;
+      color: #1d4ed8;
+    }
+    .focus-assignment { 
+      padding: 0.75rem; 
+      margin-bottom: 0.5rem; 
+      background: white; 
+      border-radius: 8px; 
+      border: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .focus-assignment-title { font-weight: 500; }
+    .focus-assignment-subject { font-size: 0.8rem; color: var(--text-light); }
+    .focus-assignment-date { font-size: 0.85rem; font-weight: 500; }
+    .focus-assignment.due-today { border-left: 3px solid #ef4444; }
+    .focus-assignment.due-tomorrow { border-left: 3px solid #f59e0b; }
+    .focus-assignment.due-this-week { border-left: 3px solid #eab308; }
+    .focus-assignment.due-next-week { border-left: 3px solid #3b82f6; }
+    .focus-assignment.due-two-weeks { border-left: 3px solid #6366f1; }
+    .legend { display: flex; gap: 1rem; font-size: 0.75rem; color: var(--text-light); }
+    .legend-item { display: flex; align-items: center; gap: 0.25rem; }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dashboard { padding: 1.5rem; }
+    .weeks-container {
+      display: flex;
+      gap: 1rem;
+      overflow-x: auto;
+      padding-bottom: 1rem;
+    }
+    .week-column {
+      min-width: 340px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .week-column.current { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2); }
+    .week-header {
+      padding: 1rem;
+      background: #f1f5f9;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 12px 12px 0 0;
+    }
+    .week-header:hover { background: #e2e8f0; }
+    .week-title { font-weight: 600; font-size: 0.9rem; }
+    .week-term { font-size: 0.75rem; color: var(--text-light); }
+    .week-toggle { font-size: 1.25rem; color: var(--text-light); transition: transform 0.2s; }
+    .week-column.collapsed .week-toggle { transform: rotate(-90deg); }
+    .week-column.collapsed { 
+      background: transparent !important; 
+      border: none !important;
+      box-shadow: none !important;
+      width: auto;
+      min-width: auto;
+    }
+    .week-column.collapsed > .week-content { display: none !important; }
+    .week-column.collapsed .week-header {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.5rem 1rem;
+      display: inline-flex;
+    }
+    .week-content { padding: 0.75rem; }
+    .subject-row { margin-bottom: 0.75rem; }
+    .subject-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .subject-header:hover { background: #f8fafc; }
+    .subject-color { width: 4px; height: 24px; border-radius: 2px; }
+    .subject-name { font-weight: 500; font-size: 0.875rem; flex: 1; }
+    .subject-count { font-size: 0.75rem; color: var(--text-light); background: var(--border); padding: 0.125rem 0.5rem; border-radius: 999px; }
+    .assignments-list { margin-left: 1rem; padding-left: 0.5rem; border-left: 1px solid var(--border); display: none; }
+    .subject-row.expanded .assignments-list { display: block; }
+    .assignment { padding: 0.5rem; margin-bottom: 0.5rem; background: #f8fafc; border-radius: 6px; font-size: 0.8rem; }
+    .assignment-title { font-weight: 500; margin-bottom: 0.25rem; }
+    .assignment-title a { color: var(--text); text-decoration: none; }
+    .assignment-title a:hover { color: var(--primary); text-decoration: underline; }
+    .focus-assignment-title { font-weight: 500; }
+    .focus-assignment-title a { color: var(--text); text-decoration: none; }
+    .focus-assignment-title a:hover { color: var(--primary); text-decoration: underline; }
+    .assignment-meta { display: flex; gap: 0.5rem; align-items: center; font-size: 0.7rem; color: var(--text-light); flex-wrap: wrap; }
+    .assignment-type { padding: 0.125rem 0.375rem; border-radius: 4px; font-weight: 500; text-transform: uppercase; font-size: 0.65rem; }
+    .assignment-status { 
+      padding: 0.125rem 0.5rem; 
+      border-radius: 4px; 
+      font-weight: 500; 
+      font-size: 0.65rem; 
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+    .assignment-status:hover { opacity: 0.8; }
+    .status-not-started { background: #f1f5f9; color: #64748b; }
+    .status-started { background: #dbeafe; color: #1d4ed8; }
+    .status-completed { background: #d1fae5; color: #047857; }
+    .status-submitted { background: #fef3c7; color: #b45309; }
+    .status-need-help { background: #fee2e2; color: #b91c1c; }
+    .status-dropdown {
+      position: absolute;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 1000;
+      min-width: 140px;
+    }
+    .status-option {
+      padding: 0.5rem 0.75rem;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    .status-option:hover { background: #f8fafc; }
+    .status-option:first-child { border-radius: 6px 6px 0 0; }
+    .status-option:last-child { border-radius: 0 0 6px 6px; }
+    .type-formative { background: #dbeafe; color: #1d4ed8; }
+    .type-summative { background: #fce7f3; color: #be185d; }
+    .type-project { background: #fef3c7; color: #b45309; }
+    .type-homework { background: #d1fae5; color: #047857; }
+    .type-test { background: #fee2e2; color: #b91c1c; }
+    .type-other { background: #f1f5f9; color: #64748b; }
+    .status-pending { color: var(--warning); }
+    .status-submitted { color: var(--info); }
+    .status-graded { color: var(--success); }
+    .status-missing { color: var(--danger); }
+    .due-date { display: flex; align-items: center; gap: 0.25rem; }
+    .empty-week { text-align: center; padding: 2rem; color: var(--text-light); font-size: 0.875rem; }
+    .loading { text-align: center; padding: 3rem; color: var(--text-light); }
+    .last-updated { font-size: 0.75rem; color: var(--text-light); }
+    
+    /* Mobile styles */
+    @media (max-width: 768px) {
+      .header {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+      }
+      .header h1 { font-size: 1.25rem; }
+      .header-actions {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .legend { display: none; }
+      .dashboard { padding: 0.75rem; }
+      .weeks-container {
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .week-column {
+        min-width: 100%;
+        width: 100%;
+      }
+      .week-column.collapsed {
+        min-width: auto;
+        width: auto;
+      }
+      .week-column.collapsed .week-header {
+        padding: 0.5rem 1rem;
+      }
+      .week-title { font-size: 0.8rem; }
+      .week-term { font-size: 0.65rem; }
+      .subject-name { font-size: 0.8rem; }
+      .assignment { padding: 0.4rem; }
+      .assignment-title { font-size: 0.75rem; }
+      .assignment-meta { font-size: 0.65rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1>⚡️ The Command Center</h1>
+      <p class="last-updated" id="lastUpdated"></p>
+    </div>
+    <div class="header-actions">
+      <div class="legend">
+        <div class="legend-item"><span class="legend-dot" style="background: #ef4444;"></span>This Week</div>
+        <div class="legend-item"><span class="legend-dot" style="background: #f59e0b;"></span>Next Week</div>
+        <div class="legend-item"><span class="legend-dot" style="background: #3b82f6;"></span>2 Weeks</div>
+      </div>
+      <button class="btn btn-secondary btn-active" id="btnWeeks" onclick="switchView('weeks')">Weeks</button>
+      <button class="btn btn-secondary" id="btnFocus" onclick="switchView('focus')">Focus</button>
+      <button class="btn btn-secondary" onclick="goToToday()">Today</button>
+      <button class="btn btn-secondary" onclick="toggleAllWeeks()">Toggle All</button>
+    </div>
+  </div>
+  
+  <div class="dashboard">
+    <div class="weeks-container" id="weeksContainer">
+      <div class="loading">Loading...</div>
+    </div>
+    <div class="focus-view" id="focusContainer">
+      <div class="loading">Loading...</div>
+    </div>
+  </div>
+
+  <script>
+    // API endpoint
+    const API_URL = 'https://3.148.208.198:3000/api';
+    
+    // Static weeks data (doesn't change often)
+    const WEEKS = [
+        {"id":1,"week_start":"2025-08-11","week_end":"2025-08-17","term":"Fall 2025","is_current":false},
+        {"id":2,"week_start":"2025-08-18","week_end":"2025-08-24","term":"Fall 2025","is_current":false},
+        {"id":3,"week_start":"2025-08-25","week_end":"2025-08-31","term":"Fall 2025","is_current":false},
+        {"id":4,"week_start":"2025-09-01","week_end":"2025-09-07","term":"Fall 2025","is_current":false},
+        {"id":5,"week_start":"2025-09-08","week_end":"2025-09-14","term":"Fall 2025","is_current":false},
+        {"id":6,"week_start":"2025-09-15","week_end":"2025-09-21","term":"Fall 2025","is_current":false},
+        {"id":7,"week_start":"2025-09-22","week_end":"2025-09-28","term":"Fall 2025","is_current":false},
+        {"id":8,"week_start":"2025-09-29","week_end":"2025-10-05","term":"Fall 2025","is_current":false},
+        {"id":9,"week_start":"2025-10-06","week_end":"2025-10-12","term":"Fall 2025","is_current":false},
+        {"id":10,"week_start":"2025-10-13","week_end":"2025-10-19","term":"Fall 2025","is_current":false},
+        {"id":11,"week_start":"2025-10-20","week_end":"2025-10-26","term":"Fall 2025","is_current":false},
+        {"id":12,"week_start":"2025-10-27","week_end":"2025-11-02","term":"Fall 2025","is_current":false},
+        {"id":13,"week_start":"2025-11-03","week_end":"2025-11-09","term":"Fall 2025","is_current":false},
+        {"id":14,"week_start":"2025-11-10","week_end":"2025-11-16","term":"Fall 2025","is_current":false},
+        {"id":15,"week_start":"2025-11-17","week_end":"2025-11-23","term":"Fall 2025","is_current":false},
+        {"id":16,"week_start":"2025-11-24","week_end":"2025-11-30","term":"Fall 2025","is_current":false},
+        {"id":17,"week_start":"2025-12-01","week_end":"2025-12-07","term":"Fall 2025","is_current":false},
+        {"id":18,"week_start":"2025-12-08","week_end":"2025-12-14","term":"Fall 2025","is_current":false},
+        {"id":19,"week_start":"2025-12-15","week_end":"2025-12-21","term":"Fall 2025","is_current":false},
+        {"id":20,"week_start":"2025-12-22","week_end":"2025-12-28","term":"Winter Break","is_current":false},
+        {"id":21,"week_start":"2025-12-29","week_end":"2026-01-04","term":"Winter Break","is_current":false},
+        {"id":22,"week_start":"2026-01-05","week_end":"2026-01-11","term":"Winter 2026","is_current":false},
+        {"id":23,"week_start":"2026-01-12","week_end":"2026-01-18","term":"Winter 2026","is_current":false},
+        {"id":24,"week_start":"2026-01-19","week_end":"2026-01-25","term":"Winter 2026","is_current":false},
+        {"id":25,"week_start":"2026-01-26","week_end":"2026-02-01","term":"Winter 2026","is_current":false},
+        {"id":26,"week_start":"2026-02-02","week_end":"2026-02-08","term":"Winter 2026","is_current":false},
+        {"id":27,"week_start":"2026-02-09","week_end":"2026-02-15","term":"Winter 2026","is_current":false},
+        {"id":28,"week_start":"2026-02-16","week_end":"2026-02-22","term":"Winter 2026","is_current":false},
+        {"id":29,"week_start":"2026-02-23","week_end":"2026-03-01","term":"Winter 2026","is_current":true},
+        {"id":30,"week_start":"2026-03-02","week_end":"2026-03-08","term":"Spring 2026","is_current":false},
+        {"id":31,"week_start":"2026-03-09","week_end":"2026-03-15","term":"Spring 2026","is_current":false},
+        {"id":32,"week_start":"2026-03-16","week_end":"2026-03-22","term":"Spring 2026","is_current":false},
+        {"id":33,"week_start":"2026-03-23","week_end":"2026-03-29","term":"Spring 2026","is_current":false},
+        {"id":34,"week_start":"2026-03-30","week_end":"2026-04-05","term":"Spring 2026","is_current":false},
+        {"id":35,"week_start":"2026-04-06","week_end":"2026-04-12","term":"Spring 2026","is_current":false},
+        {"id":36,"week_start":"2026-04-13","week_end":"2026-04-19","term":"Spring 2026","is_current":false},
+        {"id":37,"week_start":"2026-04-20","week_end":"2026-04-26","term":"Spring 2026","is_current":false},
+        {"id":38,"week_start":"2026-04-27","week_end":"2026-05-03","term":"Spring 2026","is_current":false},
+        {"id":39,"week_start":"2026-05-04","week_end":"2026-05-10","term":"Spring 2026","is_current":false},
+        {"id":40,"week_start":"2026-05-11","week_end":"2026-05-17","term":"Spring 2026","is_current":false},
+        {"id":41,"week_start":"2026-05-18","week_end":"2026-05-24","term":"Spring 2026","is_current":false},
+        {"id":42,"week_start":"2026-05-25","week_end":"2026-05-31","term":"Spring 2026","is_current":false},
+        {"id":43,"week_start":"2026-06-01","week_end":"2026-06-07","term":"Spring 2026","is_current":false}
+    ];
+    
+    // Static subjects data
+    const SUBJECTS = [
+        {"id":8,"name":"7D I&S","display_name":"I&S (History/Geography)","color":"#14b8a6"},
+        {"id":13,"name":"7G PE","display_name":"PE","color":"#22c55e"},
+        {"id":11,"name":"7th Grade","display_name":"7th Grade Advisory","color":"#84cc16"},
+        {"id":1,"name":"7th Media and Film","display_name":"7th Media and Film","color":"#8b5cf6"},
+        {"id":5,"name":"A7 Science","display_name":"Science","color":"#3b82f6"},
+        {"id":10,"name":"C7 English","display_name":"English","color":"#6366f1"},
+        {"id":9,"name":"CLA Inter Mid B","display_name":"Chinese","color":"#ef4444"},
+        {"id":12,"name":"E 7th Math","display_name":"Math","color":"#0ea5e9"},
+        {"id":2,"name":"F7 Design","display_name":"F7 Design","color":"#06b6d4"},
+        {"id":7,"name":"F7 Product Design","display_name":"Product Design","color":"#f97316"},
+    ];
+    
+    let DATA = { weeks: WEEKS, subjects: SUBJECTS, assignments: [] };
+    
+    // Fetch assignments from API
+    async function fetchAssignments() {
+      try {
+        const response = await fetch(API_URL + '?action=get_assignments');
+        const result = await response.json();
+        if (result.success) {
+          DATA.assignments = result.data;
+          document.getElementById('lastUpdated').textContent = 'Last updated: ' + new Date().toLocaleString();
+          renderDashboard();
+        }
+      } catch (e) {
+        console.error('Failed to fetch assignments:', e);
+        document.getElementById('weeksContainer').innerHTML = '<div class="error">Failed to load assignments. Using offline data.</div>';
+      }
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    }
+    
+    function getWeekRange(weekStart, weekEnd) {
+      const start = new Date(weekStart);
+      const end = new Date(weekEnd);
+      const startStr = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const endStr = end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      return `${startStr} - ${endStr}`;
+    }
+    
+    function getAssignmentTypeClass(type) {
+      const typeMap = {
+        'formative': 'type-formative',
+        'summative': 'type-summative',
+        'project': 'type-project',
+        'homework': 'type-homework',
+        'test': 'type-test',
+        'other': 'type-other'
+      };
+      return typeMap[type] || 'type-other';
+    }
+    
+    function getStatusClass(status) {
+      return `status-${status}`;
+    }
+    
+    function renderDashboard() {
+      const container = document.getElementById('weeksContainer');
+      container.innerHTML = '';
+      
+      const weekMap = new Map();
+      
+      // Group assignments by week and subject
+      DATA.assignments.forEach(a => {
+        if (!weekMap.has(a.week_id)) {
+          weekMap.set(a.week_id, { subjects: new Map() });
+        }
+        const week = weekMap.get(a.week_id);
+        const subject = DATA.subjects.find(s => s.id === a.subject_id);
+        if (!subject) return;
+        
+        if (!week.subjects.has(subject.id)) {
+          week.subjects.set(subject.id, {
+            id: subject.id,
+            name: subject.display_name,
+            color: subject.color,
+            assignments: []
+          });
+        }
+        week.subjects.get(subject.id).assignments.push(a);
+      });
+
+      // Find current week and weeks with data
+      const currentWeekId = DATA.weeks.find(w => w.is_current)?.id;
+      const weeksWithData = new Set(DATA.assignments.map(a => a.week_id));
+
+      // Render weeks
+      DATA.weeks.forEach(week => {
+        const weekData = weekMap.get(week.id);
+        const isCurrentWeek = week.id === currentWeekId;
+        const hasData = weeksWithData.has(week.id);
+        // Expand current week and any future weeks with data
+        const isExpanded = isCurrentWeek || (hasData && week.id > currentWeekId);
+        const isCollapsed = !isExpanded;
+        
+        const weekEl = document.createElement('div');
+        weekEl.className = `week-column ${isCurrentWeek ? 'current' : ''} ${isCollapsed ? 'collapsed' : ''}`;
+        if (isCurrentWeek) {
+          weekEl.id = 'current-week';
+        }
+        
+        let subjectsHtml = '';
+        if (weekData && weekData.subjects.size > 0) {
+          weekData.subjects.forEach(subject => {
+            const assignmentsHtml = subject.assignments.map(a => {
+              const statuses = loadStatuses();
+              const status = statuses[a.id] || a.status || 'not-started';
+              const assignmentLink = a.link || `https://classroom.google.com/u/1/search?q=${encodeURIComponent(a.title)}`;
+              return `
+              <div class="assignment">
+                <div class="assignment-title"><a href="${assignmentLink}" target="_blank">${a.title}</a></div>
+                <div class="assignment-meta">
+                  <span class="assignment-type ${getAssignmentTypeClass(a.assignment_type)}">${a.assignment_type}</span>
+                  ${a.due_date ? `<span class="due-date">📅 ${formatDate(a.due_date)}</span>` : ''}
+                  <span class="assignment-status ${getStatusDisplayClass(status)}" onclick="showStatusDropdown(event, ${a.id})">${getStatusLabel(status)}</span>
+                </div>
+              </div>
+            `}).join('');
+            
+            subjectsHtml += `
+              <div class="subject-row ${isExpanded ? 'expanded' : ''}" onclick="toggleSubject(event)">
+                <div class="subject-header">
+                  <div class="subject-color" style="background: ${subject.color}"></div>
+                  <span class="subject-name">${subject.name}</span>
+                  <span class="subject-count">${subject.assignments.length}</span>
+                </div>
+                <div class="assignments-list">
+                  ${assignmentsHtml}
+                </div>
+              </div>
+            `;
+          });
+        } else {
+          subjectsHtml = '<div class="empty-week">No assignments</div>';
+        }
+        
+        weekEl.innerHTML = `
+          <div class="week-header" onclick="toggleWeek(event)">
+            <div>
+              <div class="week-title">${getWeekRange(week.week_start, week.week_end)}</div>
+              <div class="week-term">${week.term}</div>
+            </div>
+            <span class="week-toggle">▼</span>
+          </div>
+          <div class="week-content">
+            ${subjectsHtml}
+          </div>
+        `;
+        
+        container.appendChild(weekEl);
+      });
+      
+      document.getElementById('lastUpdated').textContent = 'Last updated: Feb 25, 2026';
+    }
+    
+    function toggleWeek(event) {
+      const weekEl = event.target.closest('.week-column');
+      if (weekEl) {
+        // Toggle the collapsed class
+        weekEl.classList.toggle('collapsed');
+        
+        // Update the toggle icon
+        const toggle = weekEl.querySelector('.week-toggle');
+        if (toggle) {
+          toggle.textContent = weekEl.classList.contains('collapsed') ? '▶' : '▼';
+        }
+        
+        event.stopPropagation();
+      }
+    }
+    
+    function toggleSubject(event) {
+      const subjectEl = event.target.closest('.subject-row');
+      if (subjectEl) {
+        subjectEl.classList.toggle('expanded');
+        event.stopPropagation();
+      }
+    }
+    
+    function toggleAllWeeks() {
+      document.querySelectorAll('.week-column').forEach(el => {
+        el.classList.toggle('collapsed');
+      });
+    }
+    
+    function goToToday() {
+      const currentWeekEl = document.getElementById('current-week');
+      if (currentWeekEl) {
+        // Expand the week if collapsed
+        currentWeekEl.classList.remove('collapsed');
+        const toggle = currentWeekEl.querySelector('.week-toggle');
+        if (toggle) {
+          toggle.textContent = '▼';
+        }
+        
+        currentWeekEl.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+      }
+    }
+    
+    function switchView(view) {
+      const weeksContainer = document.getElementById('weeksContainer');
+      const focusContainer = document.getElementById('focusContainer');
+      const btnWeeks = document.getElementById('btnWeeks');
+      const btnFocus = document.getElementById('btnFocus');
+      
+      if (view === 'focus') {
+        weeksContainer.classList.add('hidden');
+        focusContainer.classList.add('active');
+        btnWeeks.classList.remove('btn-active');
+        btnFocus.classList.add('btn-active');
+        renderFocusView();
+      } else {
+        weeksContainer.classList.remove('hidden');
+        focusContainer.classList.remove('active');
+        btnWeeks.classList.add('btn-active');
+        btnFocus.classList.remove('btn-active');
+      }
+    }
+    
+    function renderFocusView() {
+      const container = document.getElementById('focusContainer');
+      const now = new Date();
+      
+      // Calculate date ranges
+      const endOfThisWeek = new Date(now);
+      endOfThisWeek.setDate(now.getDate() + (7 - now.getDay())); // End of this week (Sunday)
+      endOfThisWeek.setHours(23, 59, 59, 999);
+      
+      const endOfNextWeek = new Date(endOfThisWeek);
+      endOfNextWeek.setDate(endOfThisWeek.getDate() + 7);
+      
+      const endOfTwoWeeks = new Date(endOfThisWeek);
+      endOfTwoWeeks.setDate(endOfThisWeek.getDate() + 14);
+      
+      // Filter assignments by urgency
+      const thisWeek = [];
+      const nextWeek = [];
+      const twoWeeks = [];
+      
+      DATA.assignments.forEach(a => {
+        if (!a.due_date) return;
+        const dueDate = new Date(a.due_date);
+        const subject = DATA.subjects.find(s => s.id === a.subject_id);
+        
+        if (dueDate <= endOfThisWeek) {
+          thisWeek.push({ ...a, subject });
+        } else if (dueDate <= endOfNextWeek) {
+          nextWeek.push({ ...a, subject });
+        } else if (dueDate <= endOfTwoWeeks) {
+          twoWeeks.push({ ...a, subject });
+        }
+      });
+      
+      // Sort by due date
+      const sortByDueDate = (a, b) => new Date(a.due_date) - new Date(b.due_date);
+      thisWeek.sort(sortByDueDate);
+      nextWeek.sort(sortByDueDate);
+      twoWeeks.sort(sortByDueDate);
+      
+      let html = '';
+      
+      // This Week Section
+      if (thisWeek.length > 0) {
+        html += `
+          <div class="urgency-section">
+            <div class="urgency-header urgency-this-week">
+              🔴 This Week (${thisWeek.length})
+            </div>
+            ${thisWeek.map(a => renderFocusAssignment(a)).join('')}
+          </div>
+        `;
+      }
+      
+      // Next Week Section
+      if (nextWeek.length > 0) {
+        html += `
+          <div class="urgency-section">
+            <div class="urgency-header urgency-next-week">
+              🟠 Next Week (${nextWeek.length})
+            </div>
+            ${nextWeek.map(a => renderFocusAssignment(a)).join('')}
+          </div>
+        `;
+      }
+      
+      // Two Weeks Section
+      if (twoWeeks.length > 0) {
+        html += `
+          <div class="urgency-section">
+            <div class="urgency-header urgency-two-weeks">
+              🔵 In 2 Weeks (${twoWeeks.length})
+            </div>
+            ${twoWeeks.map(a => renderFocusAssignment(a)).join('')}
+          </div>
+        `;
+      }
+      
+      if (!html) {
+        html = '<div class="empty-week">No upcoming assignments in the next 2 weeks!</div>';
+      }
+      
+      container.innerHTML = html;
+    }
+    
+    function renderFocusAssignment(assignment) {
+      const dueDate = new Date(assignment.due_date);
+      const now = new Date();
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      let dueClass = '';
+      if (dueDate.toDateString() === now.toDateString()) {
+        dueClass = 'due-today';
+      } else if (dueDate.toDateString() === tomorrow.toDateString()) {
+        dueClass = 'due-tomorrow';
+      } else if (dueDate > now) {
+        dueClass = 'due-this-week';
+      }
+      
+      const daysUntil = Math.ceil((dueDate - now) / (1000 * 60 * 60 * 24));
+      let dueText = formatDate(assignment.due_date);
+      if (daysUntil === 0) dueText = '📨 TODAY';
+      else if (daysUntil === 1) dueText = '📨 TOMORROW';
+      else dueText = `📅 ${dueText}`;
+      
+      const statusClass = getStatusDisplayClass(assignment.status);
+      const assignmentLink = assignment.link || `https://classroom.google.com/u/1/search?q=${encodeURIComponent(assignment.title)}`;
+      
+      return `
+        <div class="focus-assignment ${dueClass}">
+          <div>
+            <a href="${assignmentLink}" target="_blank" class="focus-assignment-title">${assignment.title}</a>
+            <div class="focus-assignment-subject">${assignment.subject?.display_name || 'Unknown'} · ${assignment.assignment_type}</div>
+          </div>
+          <div style="text-align: right;">
+            <div class="focus-assignment-date">${dueText}</div>
+            <span class="assignment-status ${statusClass}" onclick="showStatusDropdown(event, ${assignment.id})">${getStatusLabel(assignment.status)}</span>
+          </div>
+        </div>
+      `;
+    }
+    
+    // Status management
+    const STATUS_OPTIONS = [
+      { value: 'not-started', label: 'Not started' },
+      { value: 'started', label: 'Started' },
+      { value: 'completed', label: 'Completed' },
+      { value: 'submitted', label: 'Submitted' },
+      { value: 'need-help', label: 'Need help' }
+    ];
+    
+    function getStatusLabel(status) {
+      const statusMap = {
+        'not-started': 'Not started',
+        'started': 'Started',
+        'completed': 'Completed',
+        'submitted': 'Submitted',
+        'need-help': 'Need help',
+        'pending': 'Not started'
+      };
+      return statusMap[status] || 'Not started';
+    }
+    
+    function getStatusDisplayClass(status) {
+      const classMap = {
+        'not-started': 'status-not-started',
+        'started': 'status-started',
+        'completed': 'status-completed',
+        'submitted': 'status-submitted',
+        'need-help': 'status-need-help',
+        'pending': 'status-not-started'
+      };
+      return classMap[status] || 'status-not-started';
+    }
+    
+    // Load saved statuses from localStorage
+    function loadStatuses() {
+      const saved = localStorage.getItem('assignment-statuses');
+      return saved ? JSON.parse(saved) : {};
+    }
+    
+    function saveStatuses(statuses) {
+      localStorage.setItem('assignment-statuses', JSON.stringify(statuses));
+    }
+    
+    function updateAssignmentStatus(assignmentId, newStatus) {
+      // Update locally first for immediate feedback
+      const statuses = loadStatuses();
+      statuses[assignmentId] = newStatus;
+      saveStatuses(statuses);
+      
+      // Update the assignment in DATA
+      const assignment = DATA.assignments.find(a => a.id == assignmentId);
+      if (assignment) {
+        assignment.status = newStatus;
+      }
+      
+      // Re-render current view
+      renderDashboard();
+      if (document.getElementById('focusContainer').classList.contains('active')) {
+        renderFocusView();
+      }
+      
+      // Close dropdown
+      closeStatusDropdown();
+      
+      // Also save to API
+      fetch(API_URL + '?action=update_status', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'id=' + assignmentId + '&status=' + newStatus
+      }).catch(e => console.error('Failed to save status:', e));
+    }
+    
+    function showStatusDropdown(event, assignmentId) {
+      event.stopPropagation();
+      
+      // Close any existing dropdown
+      closeStatusDropdown();
+      
+      const statuses = loadStatuses();
+      const currentStatus = statuses[assignmentId] || 'not-started';
+      
+      const dropdown = document.createElement('div');
+      dropdown.className = 'status-dropdown';
+      dropdown.id = 'status-dropdown';
+      
+      dropdown.innerHTML = STATUS_OPTIONS.map(opt => `
+        <div class="status-option" onclick="updateAssignmentStatus(${assignmentId}, '${opt.value}')">
+          ${opt.value === currentStatus ? '✓ ' : ''}${opt.label}
+        </div>
+      `).join('');
+      
+      // Position the dropdown
+      const rect = event.target.getBoundingClientRect();
+      dropdown.style.position = 'fixed';
+      dropdown.style.top = (rect.bottom + 4) + 'px';
+      dropdown.style.left = rect.left + 'px';
+      
+      document.body.appendChild(dropdown);
+      
+      // Close on outside click
+      setTimeout(() => {
+        document.addEventListener('click', closeStatusDropdown);
+      }, 10);
+    }
+    
+    function closeStatusDropdown() {
+      const dropdown = document.getElementById('status-dropdown');
+      if (dropdown) {
+        dropdown.remove();
+      }
+      document.removeEventListener('click', closeStatusDropdown);
+    }
+    
+    // Initial render - fetch from API
+    fetchAssignments();
+    
+    // Scroll to current week
+    setTimeout(() => {
+      const currentWeekEl = document.getElementById('current-week');
+      if (currentWeekEl) {
+        currentWeekEl.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+      }
+    }, 100);
+  </script>
+</body>
+</html>
