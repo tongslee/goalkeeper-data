@@ -63,11 +63,11 @@ app.post('/api/assignments/update', async (req, res) => {
 });
 
 app.post('/api/assignments/add', async (req, res) => {
-  const { title, subject_id, due_date, assignment_type, status } = req.body;
+  const { title, subject_id, due_date, assignment_type, status, week_id } = req.body;
   try {
     const result = await schoolPool.query(
-      'INSERT INTO school_assignments (title, subject_id, due_date, assignment_type, status) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [title, subject_id, due_date, assignment_type, status || 'pending']
+      'INSERT INTO school_assignments (title, subject_id, due_date, assignment_type, status, week_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [title, subject_id, due_date, assignment_type, status || 'pending', week_id]
     );
     res.json({ success: true, data: result.rows[0] });
   } catch (e) {
