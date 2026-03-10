@@ -433,8 +433,8 @@
       const currentWeekId = DATA.weeks.find(w => w.is_current)?.id;
       const weeksWithData = new Set(DATA.assignments.map(a => a.week_id));
 
-      // Sort weeks: future weeks first (descending), then current, then past
-      const sortedWeeks = [...DATA.weeks].sort((a, b) => b.id - a.id);
+      // Sort weeks: current first (left), then future weeks (right)
+      const sortedWeeks = [...DATA.weeks].sort((a, b) => a.id - b.id);
 
       // Render weeks (future first, then current, then past)
       sortedWeeks.forEach(week => {
